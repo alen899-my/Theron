@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "build": "playwright install --with-deps chromium",
     "db:init": "node src/scripts/init-db.js",
     "install:browsers": "playwright install chromium"
   },
