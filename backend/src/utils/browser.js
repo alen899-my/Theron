@@ -41,7 +41,55 @@ function normalizeWebsiteUrl(url) {
   return `https://${trimmed}`;
 }
 
+let isInstallingPromise = null;
+
+async function ensureBrowserInstalled() {
+  const custom = resolveBrowserExecutable();
+  if (custom) {
+    return custom;
+  }
+
+  const { chromium } = require("playwright");
+  try {
+    const defaultExecPath = chromium.executablePath();
+    if (defaultExecPath && fs.existsSync(defaultExecPath)) {
+      return defaultExecPath;
+    }
+  } catch (err) {
+    // Missing executable
+  }
+
+  if (isInstallingPromise) {
+    await isInstallingPromise;
+    return resolveBrowserExecutable() || null;
+  }
+
+  console.log("[browser] Chromium executable not found on system. Installing Playwright Chromium...");
+  const { exec } = require("child_process");
+
+  isInstallingPromise = new Promise((resolve) => {
+    exec("npx playwright install chromium", { env: process.env }, (err, stdout, stderr) => {
+      if (err) {
+        console.error("[browser] Auto-install failed:", err.message);
+      } else {
+        console.log("[browser] Playwright Chromium auto-installed successfully.");
+      }
+      resolve();
+    });
+  });
+
+  await isInstallingPromise;
+  isInstallingPromise = null;
+
+  try {
+    return chromium.executablePath();
+  } catch (e) {
+    return resolveBrowserExecutable();
+  }
+}
+
 module.exports = {
   resolveBrowserExecutable,
+  ensureBrowserInstalled,
   normalizeWebsiteUrl
 };

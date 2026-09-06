@@ -1,6 +1,6 @@
 const { chromium } = require("playwright");
 const env = require("../config/env");
-const { resolveBrowserExecutable } = require("../utils/browser");
+const { resolveBrowserExecutable, ensureBrowserInstalled } = require("../utils/browser");
 const {
   cleanText,
   normalizePhone,
@@ -266,7 +266,7 @@ async function scrapeGoogleMapsSearch({
   onBusiness,
   abortSignal
 }) {
-  const executablePath = resolveBrowserExecutable();
+  const executablePath = await ensureBrowserInstalled();
   const launchOptions = {
     headless,
     args: [
