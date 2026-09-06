@@ -32,7 +32,7 @@ app.use(
 );
 app.use(express.json({ limit: "1mb" }));
 
-app.get("/health", (req, res) => {
+app.get(["/health", "/api/health"], (req, res) => {
   res.json({
     ok: true,
     service: "maps-pipeline-backend",
