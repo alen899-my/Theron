@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/playwright:jammy
 
 WORKDIR /app
 
-# Copy dependency specifications
-COPY package*.json ./
+# Copy dependency specifications from backend
+COPY backend/package*.json ./
 
 # Install project dependencies
 RUN npm install
@@ -12,7 +12,7 @@ RUN npm install
 RUN npx playwright install chromium
 
 # Copy backend application source
-COPY . .
+COPY backend/ ./
 
 # Expose backend port
 ENV PORT=4000
