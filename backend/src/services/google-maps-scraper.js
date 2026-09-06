@@ -148,13 +148,21 @@ async function readAttribute(locator, attribute) {
 
 async function extractPlaceDetails(context, place, options) {
   const detailPage = await context.newPage();
-  detailPage.setDefaultTimeout(env.scraperDetailTimeoutMs || 10000);
+  detailPage.setDefaultTimeout(env.scraperDetailTimeoutMs || 15000);
 
   try {
-    await detailPage.goto(place.href, {
-      waitUntil: "domcontentloaded",
-      timeout: env.scraperNavigationTimeoutMs
-    });
+    try {
+      await detailPage.goto(place.href, {
+        waitUntil: "domcontentloaded",
+        timeout: Math.min(env.scraperNavigationTimeoutMs, 18000)
+      });
+    } catch (navError) {
+      // Even if domcontentloaded timed out, check if business pane is already rendered
+      const hasContent = await detailPage.$("h1, div[role='main']").catch(() => null);
+      if (!hasContent) {
+        throw navError;
+      }
+    }
 
     await dismissConsentIfPresent(detailPage);
 
@@ -273,7 +281,10 @@ async function scrapeGoogleMapsSearch({
       "--disable-blink-features=AutomationControlled",
       "--no-sandbox",
       "--disable-dev-shm-usage",
-      "--disable-gpu"
+      "--disable-gpu",
+      "--disable-software-rasterizer",
+      "--disable-accelerated-2d-canvas",
+      "--mute-audio"
     ]
   };
 
@@ -290,7 +301,7 @@ async function scrapeGoogleMapsSearch({
     locale: "en-US"
   });
 
-  // Block images, fonts, media, and analytics to make page loads and DOM extraction ultra fast
+  // Block images, fonts, vector tiles, media, and analytics to make page loads and DOM extraction ultra fast
   await context.route("**/*", (route) => {
     const request = route.request();
     const resourceType = request.resourceType();
@@ -300,6 +311,9 @@ async function scrapeGoogleMapsSearch({
       resourceType === "image" ||
       resourceType === "media" ||
       resourceType === "font" ||
+      url.includes("/maps/vt") ||
+      url.includes("/vt/pb=") ||
+      url.includes("/maps/preview/log204") ||
       url.includes("google-analytics.com") ||
       url.includes("doubleclick.net") ||
       url.includes("googletagmanager.com") ||
@@ -356,7 +370,7 @@ async function scrapeGoogleMapsSearch({
       );
     }
 
-    const CONCURRENCY = 3;
+    const CONCURRENCY = process.env.SCRAPER_CONCURRENCY ? Number(process.env.SCRAPER_CONCURRENCY) : 2;
     const results = [];
     let nextIndex = 0;
     let savedNewCount = 0;
