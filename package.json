@@ -1,0 +1,16 @@
+{
+  "name": "theron",
+  "private": true,
+  "version": "1.0.0",
+  "description": "High-Performance Google Maps Lead Generation, Contact Enrichment & Pipeline Management System",
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c cyan,magenta \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "node backend/src/server.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
