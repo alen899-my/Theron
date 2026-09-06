@@ -49,6 +49,7 @@ module.exports = {
   jwtSecret: requireEnv("JWT_SECRET"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   defaultHeadless: readBoolean("DEFAULT_HEADLESS", true),
+  clientUrl: process.env.CLIENT_URL ? process.env.CLIENT_URL.trim() : "",
   browserExecutablePath: process.env.BROWSER_EXECUTABLE_PATH || "",
   scraperNavigationTimeoutMs: readNumber("SCRAPER_NAVIGATION_TIMEOUT_MS", 30000),
   scraperDetailTimeoutMs: readNumber("SCRAPER_DETAIL_TIMEOUT_MS", 20000),
