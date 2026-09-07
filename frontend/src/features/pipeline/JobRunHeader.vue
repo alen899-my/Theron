@@ -9,9 +9,10 @@
           v-if="job?.options?.engine"
           class="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-xs font-medium bg-muted text-foreground"
         >
-          <template v-if="job.options.engine === 'ai'">🤖 AI Search</template>
-          <template v-else-if="job.options.engine === 'hybrid'">⚡ AI + Web Emails</template>
-          <template v-else>🌐 Google Maps</template>
+          <template v-if="job.options.engine === 'rpc'">⚡ Fast Google Maps</template>
+          <template v-else-if="job.options.engine === 'ai'">🤖 AI Search</template>
+          <template v-else-if="job.options.engine === 'hybrid'">🔀 AI + Web Emails</template>
+          <template v-else>🌐 Google Maps (Browser)</template>
         </span>
         <span v-if="job?.category" class="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-xs font-mono bg-muted text-foreground">
           {{ job.category }}

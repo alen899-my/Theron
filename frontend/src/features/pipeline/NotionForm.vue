@@ -28,6 +28,21 @@
                 type="button"
                 :class="[
                   'px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 cursor-pointer',
+                  form.engine === 'rpc'
+                    ? 'bg-foreground text-background font-semibold shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                ]"
+                @click="form.engine = 'rpc'"
+              >
+                <Zap class="h-3.5 w-3.5" />
+                <span>Fast Google Maps</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono" :class="form.engine === 'rpc' ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'">100x Faster</span>
+              </button>
+
+              <button
+                type="button"
+                :class="[
+                  'px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 cursor-pointer',
                   form.engine === 'browser'
                     ? 'bg-foreground text-background font-semibold shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -35,8 +50,7 @@
                 @click="form.engine = 'browser'"
               >
                 <Globe class="h-3.5 w-3.5" />
-                <span>Google Maps</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono" :class="form.engine === 'browser' ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'">Recommended for Local</span>
+                <span>Google Maps (Browser)</span>
               </button>
 
               <button
@@ -51,7 +65,6 @@
               >
                 <Bot class="h-3.5 w-3.5" />
                 <span>AI Search</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono" :class="form.engine === 'ai' ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'">Fast</span>
               </button>
 
               <button
@@ -64,20 +77,23 @@
                 ]"
                 @click="form.engine = 'hybrid'"
               >
-                <Zap class="h-3.5 w-3.5" />
-                <span>AI + Website Email Search</span>
+                <Sparkles class="h-3.5 w-3.5" />
+                <span>AI + Website Emails</span>
               </button>
             </div>
 
             <p class="text-[11px] text-muted-foreground">
-              <template v-if="form.engine === 'browser'">
-                🌐 <strong>Google Maps</strong>: Best for finding physical shops, workshops, clinics, and restaurants in specific cities or towns.
+              <template v-if="form.engine === 'rpc'">
+                ⚡ <strong>Fast Google Maps (Direct HTTP)</strong>: 100x faster extraction directly from Google Maps with zero browser memory. Recommended for all local businesses.
+              </template>
+              <template v-else-if="form.engine === 'browser'">
+                🌐 <strong>Google Maps (Browser)</strong>: Full Chromium automation via Playwright.
               </template>
               <template v-else-if="form.engine === 'ai'">
-                ⚡ <strong>AI Search</strong>: Fast B2B directory search powered by OpenRouter. Best for agencies, tech, and corporate companies.
+                🤖 <strong>AI Search</strong>: Fast B2B directory search powered by OpenRouter. Best for agencies, tech, and corporate companies.
               </template>
               <template v-else>
-                🔀 <strong>AI + Website Email Search</strong>: Finds company leads with AI and automatically visits their websites to extract contact emails.
+                🔀 <strong>AI + Website Emails</strong>: Finds corporate leads with AI and automatically visits their websites to extract contact emails.
               </template>
             </p>
           </div>
@@ -312,7 +328,7 @@ const categoryPresets = [
 const form = reactive({
   searchQuery: "",
   category: "",
-  engine: "ai",
+  engine: "rpc",
   maxResults: 25,
   headless: true,
   collectEmailsFromWebsite: true,

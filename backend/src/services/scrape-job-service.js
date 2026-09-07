@@ -5,6 +5,7 @@ const { buildSelectedPayload } = require("../utils/field-selection");
 const { uniqueStrings } = require("../utils/normalize");
 const { scrapeGoogleMapsSearch } = require("./google-maps-scraper");
 const { discoverLeadsWithAI } = require("./openrouter-service");
+const { discoverMapsLeadsViaRpc } = require("./google-maps-rpc-service");
 const { collectEmailsFromWebsite } = require("./website-email-service");
 const {
   upsertBusiness,
@@ -21,7 +22,7 @@ async function createScrapeJob({
   maxResults,
   headless,
   collectEmailsFromWebsite,
-  engine = "ai"
+  engine = "rpc"
 }) {
   const result = await pool.query(
     `
@@ -237,7 +238,49 @@ async function runScrapeJob(job) {
 
     let scrapeResult;
 
-    if (engine === "ai" || engine === "hybrid") {
+    if (engine === "rpc" || engine === "fast_maps") {
+      const rpcLeads = await discoverMapsLeadsViaRpc({
+        searchQuery: job.searchQuery,
+        category: job.category,
+        maxResults: job.maxResults,
+        abortSignal: controller.signal,
+        onProgress: async (message) => {
+          await addJobLog(job.id, message);
+        }
+      });
+
+      for (let i = 0; i < rpcLeads.length; i++) {
+        if (controller.signal.aborted) {
+          break;
+        }
+        const scrapedBusiness = rpcLeads[i];
+
+        // If website email crawling is requested
+        if (
+          job.options?.collectEmailsFromWebsite === true &&
+          scrapedBusiness.website &&
+          (!scrapedBusiness.emails || scrapedBusiness.emails.length === 0)
+        ) {
+          try {
+            await addJobLog(job.id, `[Fast Maps] Checking ${scrapedBusiness.website} for emails...`);
+            const webEmails = await collectEmailsFromWebsite(scrapedBusiness.website);
+            if (webEmails && webEmails.length > 0) {
+              scrapedBusiness.emails = uniqueStrings([...(scrapedBusiness.emails || []), ...webEmails]);
+              await addJobLog(
+                job.id,
+                `[Fast Maps] Discovered ${webEmails.length} email(s) from website: ${webEmails.join(", ")}`
+              );
+            }
+          } catch (crawlErr) {
+            // Non-blocking website email crawl
+          }
+        }
+
+        await handleBusinessProcessing(scrapedBusiness);
+      }
+
+      scrapeResult = { discoveredCount: rpcLeads.length };
+    } else if (engine === "ai" || engine === "hybrid") {
       scrapeResult = await discoverLeadsWithAI({
         searchQuery: job.searchQuery,
         category: job.category,
