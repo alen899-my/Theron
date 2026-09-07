@@ -373,7 +373,7 @@ function handleSubmit() {
   emit("submit", {
     searchQuery: form.searchQuery.trim(),
     category: form.category.trim(),
-    engine: form.engine,
+    engine: form.engine || "rpc",
     maxResults: form.maxResults,
     headless: form.headless,
     collectEmailsFromWebsite: form.collectEmailsFromWebsite,

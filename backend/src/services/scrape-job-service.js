@@ -49,7 +49,7 @@ async function createScrapeJob({
       JSON.stringify({
         headless,
         collectEmailsFromWebsite,
-        engine: engine || "ai"
+        engine: engine || "rpc"
       })
     ]
   );
@@ -179,7 +179,7 @@ async function attachBusinessToJob({ jobId, businessId, position, selectedPayloa
 
 async function runScrapeJob(job) {
   await setJobRunning(job.id);
-  const engine = (job.options?.engine || "ai").toLowerCase();
+  const engine = (job.options?.engine || "rpc").toLowerCase();
   await addJobLog(job.id, `Job started using ${engine.toUpperCase()} engine for query: "${job.searchQuery}"`);
 
   let savedCount = 0;

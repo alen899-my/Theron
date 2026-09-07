@@ -42,9 +42,9 @@ router.post("/jobs", async (req, res, next) => {
         ? body.collectEmailsFromWebsite
         : requestedFields.includes("emails");
     const engine =
-      typeof body.engine === "string" && ["ai", "browser", "hybrid"].includes(body.engine.toLowerCase())
+      typeof body.engine === "string" && ["rpc", "fast_maps", "browser", "ai", "hybrid"].includes(body.engine.toLowerCase())
         ? body.engine.toLowerCase()
-        : "ai";
+        : "rpc";
 
     if (!searchQuery) {
       return res.status(400).json({ error: "searchQuery is required" });
