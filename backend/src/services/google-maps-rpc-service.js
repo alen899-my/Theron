@@ -17,15 +17,11 @@ function getRandomUserAgent() {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
-async function fetchRpcBatch(searchQuery, offset = 0) {
+async function fetchRpcBatch(searchQuery, count = 20) {
   const encodedQuery = encodeURIComponent(searchQuery);
-  // Protobuf parameters for Google Maps search:
-  // !1s{query} -> search string
-  // !7i20 -> 20 results per page
-  // !10b1 -> structured business entities
-  // !12m3!2m1!2i20!3e1 -> search mode
-  // !2i{offset} -> pagination offset (0, 20, 40, ...)
-  const pb = `!1s${encodedQuery}!7i20!10b1!12m3!2m1!2i20!3e1!2i${offset}`;
+  // !7i{count} controls how many results Google returns (up to ~500).
+  // Single request gets all leads — no offset pagination needed.
+  const pb = `!1s${encodedQuery}!7i${count}!10b1!12m3!2m1!2i${count}!3e1`;
   const url = `https://www.google.com/search?tbm=map&authuser=0&hl=en&gl=in&q=${encodedQuery}&pb=${pb}`;
 
   const options = {
@@ -131,8 +127,9 @@ function extractLeadsFromRpcResponse(parsed, defaultCategory) {
 }
 
 /**
- * Fast Google Maps Lead Discovery via Reverse-Engineered RPC
- * Direct HTTP requests - Zero browser overhead, ~1 second per 20 leads.
+ * Fast Google Maps Lead Discovery via Reverse-Engineered RPC.
+ * Sends ONE HTTP request with !7i{count} to get all results at once.
+ * Zero browser overhead, ~1-2 seconds for up to 500 leads.
  */
 async function discoverMapsLeadsViaRpc({
   searchQuery,
@@ -142,77 +139,40 @@ async function discoverMapsLeadsViaRpc({
   abortSignal = null
 }) {
   const targetCount = Math.min(Math.max(Number(maxResults) || 25, 1), 500);
-  const collectedLeads = [];
-  const seenKeys = new Set();
 
   if (onProgress) {
     await onProgress(`[Fast Maps RPC] Initializing direct HTTP search for: "${searchQuery}" (Target: ${targetCount} leads)...`);
   }
 
-  let offset = 0;
-  let emptyPasses = 0;
-  const maxEmptyPasses = 2;
+  if (abortSignal?.aborted) {
+    if (onProgress) await onProgress("[Fast Maps RPC] Search stopped by user.");
+    return [];
+  }
 
-  while (collectedLeads.length < targetCount && emptyPasses < maxEmptyPasses) {
-    if (abortSignal?.aborted) {
-      if (onProgress) {
-        await onProgress("[Fast Maps RPC] Search stopped by user.");
-      }
-      break;
-    }
+  if (onProgress) {
+    await onProgress(`[Fast Maps RPC] Requesting up to ${targetCount} places in a single call...`);
+  }
 
-    const batchNumber = Math.floor(offset / 20) + 1;
+  let batchLeads = [];
+  try {
+    const response = await fetchRpcBatch(searchQuery, targetCount);
+    batchLeads = extractLeadsFromRpcResponse(response, category);
+  } catch (err) {
     if (onProgress) {
-      await onProgress(`[Fast Maps RPC] Requesting batch #${batchNumber} (offset ${offset})...`);
+      await onProgress(`[Fast Maps RPC] Request failed: ${err.message}`);
     }
+    return [];
+  }
 
-    try {
-      const response = await fetchRpcBatch(searchQuery, offset);
-      const batchLeads = extractLeadsFromRpcResponse(response, category);
-
-      if (!batchLeads.length) {
-        emptyPasses += 1;
-        if (onProgress) {
-          await onProgress(`[Fast Maps RPC] No more places returned at offset ${offset}.`);
-        }
-        break;
-      }
-
-      let newCount = 0;
-      for (const lead of batchLeads) {
-        const dedupeKey = buildDedupeKey(lead);
-        if (!seenKeys.has(dedupeKey)) {
-          seenKeys.add(dedupeKey);
-          collectedLeads.push(lead);
-          newCount += 1;
-          if (collectedLeads.length >= targetCount) {
-            break;
-          }
-        }
-      }
-
-      if (onProgress) {
-        await onProgress(`[Fast Maps RPC] Batch #${batchNumber}: Found ${batchLeads.length} places (${newCount} new, total: ${collectedLeads.length}/${targetCount}).`);
-      }
-
-      if (newCount === 0) {
-        emptyPasses += 1;
-      } else {
-        emptyPasses = 0;
-      }
-
-      offset += 20;
-
-      // Polite inter-batch delay (350ms) to ensure smooth traffic flow
-      if (collectedLeads.length < targetCount) {
-        await new Promise((resolve) => setTimeout(resolve, 350));
-      }
-    } catch (err) {
-      if (onProgress) {
-        await onProgress(`[Fast Maps RPC] Error in batch #${batchNumber}: ${err.message}. Retrying...`);
-      }
-      emptyPasses += 1;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Deduplicate by dedupeKey
+  const seenKeys = new Set();
+  const collectedLeads = [];
+  for (const lead of batchLeads) {
+    const key = lead.dedupeKey || buildDedupeKey(lead);
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      collectedLeads.push(lead);
+      if (collectedLeads.length >= targetCount) break;
     }
   }
 
