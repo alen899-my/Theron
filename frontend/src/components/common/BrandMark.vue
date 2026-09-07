@@ -7,9 +7,9 @@
     </div>
     <div>
       <p class="text-xs font-bold tracking-tight text-foreground uppercase">
-        Router Command
+        Theron
       </p>
-      <p class="text-[10px] text-muted-foreground font-mono">Pipeline Control</p>
+      <p class="text-[10px] text-muted-foreground font-mono">Lead Intelligence</p>
     </div>
   </div>
 </template>

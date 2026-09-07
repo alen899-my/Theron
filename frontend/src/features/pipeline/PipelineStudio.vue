@@ -24,7 +24,7 @@
         <div class="space-y-4 min-w-0">
           <LiveDataTable
             v-if="activeView === 'table'"
-            title="Google Maps Leads Live Stream"
+            title="Discovered Leads"
             :rows="currentResults"
             :is-running="currentActiveJob?.status === 'running'"
           />

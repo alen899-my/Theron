@@ -62,7 +62,7 @@ const router = createRouter({
           component: PipelineView,
           meta: {
             requiresAuth: true,
-            title: "Pipeline Studio"
+            title: "Find Leads"
           }
         },
         {
@@ -71,7 +71,7 @@ const router = createRouter({
           component: LeadsView,
           meta: {
             requiresAuth: true,
-            title: "Lead Archive"
+            title: "All Leads"
           }
         }
       ]
@@ -106,7 +106,7 @@ router.beforeEach(async (to) => {
     };
   }
 
-  document.title = `${to.meta.title || "Router Command"} | Router Command`;
+  document.title = `${to.meta.title || "Theron"} | Theron`;
   return true;
 });
 

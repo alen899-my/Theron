@@ -178,11 +178,11 @@
           </select>
         </div>
 
-        <!-- 2. Workflow Status Filter -->
+        <!-- 2. Status Filter -->
         <div class="space-y-1.5">
           <label class="font-mono text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Clock class="h-3.5 w-3.5" />
-            <span>Workflow Status</span>
+            <span>Status</span>
           </label>
           <select
             v-model="filters.status"
@@ -419,13 +419,13 @@
             <th class="py-2.5 px-3 font-mono font-medium text-muted-foreground w-12 text-center">#</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[200px]">Business Name</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Category</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[145px]">Workflow Status</th>
+            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Status</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Phone</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[180px]">Discovered Email(s)</th>
+            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[180px]">Email</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[160px]">Website</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[110px]">Rating</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[220px]">Address</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground w-16 text-center">Maps</th>
+            <th class="py-2.5 px-3 font-medium text-muted-foreground w-16 text-center">Map</th>
             <!-- End Column: Actions Buttons (Eye + Trash) -->
             <th class="py-2.5 px-3 font-medium text-muted-foreground w-20 text-center">Actions</th>
           </tr>

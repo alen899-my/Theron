@@ -1,25 +1,88 @@
 <template>
   <div class="rounded-xl border border-border bg-card p-5 sm:p-7 transition-all shadow-sm">
-    <!-- Document Header / Title -->
-    <div class="mb-6 flex flex-col gap-2">
-      <div class="flex items-center gap-2 text-muted-foreground text-xs font-mono uppercase tracking-wider">
-        <span class="inline-block h-2 w-2 rounded-full bg-foreground/70"></span>
-        Google Maps Lead Pipeline
-      </div>
+    <!-- Header -->
+    <div class="mb-6 flex flex-col gap-1.5">
       <div class="flex items-center justify-between gap-3">
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-          <span>🗺️</span>
-          <span>Google Maps Lead Engine</span>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+          <Search class="h-5 w-5 text-foreground" />
+          <span>Find Business Leads</span>
         </h2>
       </div>
       <p class="text-xs sm:text-sm text-muted-foreground">
-        Scrape local businesses, extract verified phone numbers, crawl company websites for contact emails, and archive structured leads.
+        Search local businesses or corporate directories, extract phone numbers and emails, and save them for outreach.
       </p>
     </div>
 
-    <!-- Notion Property Table -->
+    <!-- Form Table -->
     <form class="space-y-4" @submit.prevent="handleSubmit" @keydown.ctrl.enter="handleSubmit" @keydown.meta.enter="handleSubmit">
       <div class="rounded-lg border border-border divide-y divide-border bg-background/50 overflow-hidden text-sm">
+        <!-- Property: Search Method -->
+        <div class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start p-3 gap-2 bg-muted/20">
+          <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground pt-1.5">
+            <Sparkles class="h-3.5 w-3.5 text-foreground" />
+            <span>Search Method</span>
+          </div>
+          <div class="space-y-2">
+            <div class="inline-flex rounded-lg border border-border p-1 bg-background gap-1 flex-wrap">
+              <button
+                type="button"
+                :class="[
+                  'px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 cursor-pointer',
+                  form.engine === 'browser'
+                    ? 'bg-foreground text-background font-semibold shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                ]"
+                @click="form.engine = 'browser'"
+              >
+                <Globe class="h-3.5 w-3.5" />
+                <span>Google Maps</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono" :class="form.engine === 'browser' ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'">Recommended for Local</span>
+              </button>
+
+              <button
+                type="button"
+                :class="[
+                  'px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 cursor-pointer',
+                  form.engine === 'ai'
+                    ? 'bg-foreground text-background font-semibold shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                ]"
+                @click="form.engine = 'ai'"
+              >
+                <Bot class="h-3.5 w-3.5" />
+                <span>AI Search</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono" :class="form.engine === 'ai' ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'">Fast</span>
+              </button>
+
+              <button
+                type="button"
+                :class="[
+                  'px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 cursor-pointer',
+                  form.engine === 'hybrid'
+                    ? 'bg-foreground text-background font-semibold shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                ]"
+                @click="form.engine = 'hybrid'"
+              >
+                <Zap class="h-3.5 w-3.5" />
+                <span>AI + Website Email Search</span>
+              </button>
+            </div>
+
+            <p class="text-[11px] text-muted-foreground">
+              <template v-if="form.engine === 'browser'">
+                🌐 <strong>Google Maps</strong>: Best for finding physical shops, workshops, clinics, and restaurants in specific cities or towns.
+              </template>
+              <template v-else-if="form.engine === 'ai'">
+                ⚡ <strong>AI Search</strong>: Fast B2B directory search powered by OpenRouter. Best for agencies, tech, and corporate companies.
+              </template>
+              <template v-else>
+                🔀 <strong>AI + Website Email Search</strong>: Finds company leads with AI and automatically visits their websites to extract contact emails.
+              </template>
+            </p>
+          </div>
+        </div>
+
         <!-- Property: Target Query -->
         <div class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start p-3 gap-2">
           <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground pt-1.5">
@@ -33,7 +96,7 @@
             <input
               v-model="form.searchQuery"
               type="text"
-              placeholder="e.g. dentists in Brooklyn, NY or software companies in Austin"
+              placeholder="e.g. Vehicle workshops in Ernakulam, or Dental clinics in Dallas"
               class="w-full bg-transparent px-2.5 py-1.5 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 border border-transparent hover:border-border focus:border-foreground/40 rounded-md outline-none transition-colors"
             />
           </div>
@@ -53,7 +116,7 @@
               v-model="form.category"
               type="text"
               required
-              placeholder="e.g. Software, Real Estate, Dental Clinic, Restaurant"
+              placeholder="e.g. Automotive, Real Estate, Dental Clinic, Restaurant"
               class="w-full bg-transparent px-2.5 py-1.5 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 border border-transparent hover:border-border focus:border-foreground/40 rounded-md outline-none transition-colors"
             />
             <div class="flex flex-wrap items-center gap-1.5">
@@ -63,7 +126,7 @@
                 :key="cat"
                 type="button"
                 :class="[
-                  'px-2 py-0.5 rounded text-xs font-mono border transition-colors',
+                  'px-2 py-0.5 rounded text-xs font-mono border transition-colors cursor-pointer',
                   form.category === cat
                     ? 'bg-foreground text-background border-foreground font-semibold'
                     : 'border-border/70 text-muted-foreground hover:text-foreground hover:border-border'
@@ -76,11 +139,11 @@
           </div>
         </div>
 
-        <!-- Property: Depth / Limit -->
+        <!-- Property: Number of Leads -->
         <div class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center p-3 gap-2">
           <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <SlidersHorizontal class="h-3.5 w-3.5" />
-            <span>Target Depth</span>
+            <span>Number of Leads</span>
           </div>
           <div class="flex items-center gap-3">
             <input
@@ -90,14 +153,14 @@
               max="500"
               class="w-20 rounded-md border border-border bg-background px-2.5 py-1 text-sm font-mono text-foreground outline-none focus:border-foreground/50"
             />
-            <span class="text-xs text-muted-foreground">leads maximum (1-500)</span>
+            <span class="text-xs text-muted-foreground">leads to find (1-500)</span>
             <div class="hidden sm:flex gap-1.5 ml-auto">
               <button
                 v-for="preset in [25, 50, 100, 250, 500]"
                 :key="preset"
                 type="button"
                 :class="[
-                  'px-2 py-0.5 rounded text-xs font-mono border transition-colors',
+                  'px-2 py-0.5 rounded text-xs font-mono border transition-colors cursor-pointer',
                   form.maxResults === preset
                     ? 'bg-foreground text-background border-foreground font-semibold'
                     : 'border-border text-muted-foreground hover:text-foreground'
@@ -110,11 +173,11 @@
           </div>
         </div>
 
-        <!-- Property: Schema Fields (Notion tags) -->
+        <!-- Property: Columns to Collect -->
         <div class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start p-3 gap-2">
           <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground pt-1">
             <Table2 class="h-3.5 w-3.5" />
-            <span>Extracted Schema</span>
+            <span>Columns to Collect</span>
           </div>
           <div class="flex flex-wrap gap-1.5">
             <button
@@ -122,9 +185,9 @@
               :key="field.value"
               type="button"
               :class="[
-                'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-mono transition-all',
+                'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-mono transition-all cursor-pointer',
                 form.requestedFields.includes(field.value)
-                  ? 'border border-foreground/30 bg-muted text-foreground font-medium'
+                  ? 'border border-foreground/30 bg-muted text-foreground font-medium shadow-2xs'
                   : 'border border-border/70 text-muted-foreground hover:border-foreground/20'
               ]"
               @click="toggleField(field.value)"
@@ -135,30 +198,33 @@
           </div>
         </div>
 
-        <!-- Property: Execution Options -->
+        <!-- Property: Search Options -->
         <div class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center p-3 gap-2">
           <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <Cpu class="h-3.5 w-3.5" />
-            <span>Engine Flags</span>
+            <span>Search Options</span>
           </div>
           <div class="flex flex-wrap items-center gap-3">
+            <!-- If Browser mode, show Fast Background toggle -->
             <button
+              v-if="form.engine === 'browser'"
               type="button"
               :class="[
-                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono border transition-colors',
+                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono border transition-colors cursor-pointer',
                 form.headless
                   ? 'border-border bg-muted text-foreground font-medium'
                   : 'border-border/70 bg-background text-muted-foreground'
               ]"
               @click="form.headless = !form.headless"
             >
-              <span>{{ form.headless ? '⚡ Headless (Fast)' : '🖥️ Visible Browser (Debug)' }}</span>
+              <span>{{ form.headless ? '⚡ Fast Background Mode' : '🖥️ Show Browser Window' }}</span>
             </button>
 
+            <!-- Crawl Web Emails Toggle -->
             <button
               type="button"
               :class="[
-                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono border transition-colors',
+                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono border transition-colors cursor-pointer',
                 form.collectEmailsFromWebsite
                   ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 font-medium'
                   : 'border-border/70 bg-background text-muted-foreground'
@@ -166,7 +232,7 @@
               @click="form.collectEmailsFromWebsite = !form.collectEmailsFromWebsite"
             >
               <Mail class="h-3 w-3" />
-              <span>{{ form.collectEmailsFromWebsite ? 'Enrich Emails: ON' : 'Enrich Emails: OFF' }}</span>
+              <span>{{ form.collectEmailsFromWebsite ? 'Find Website Emails: ON' : 'Find Website Emails: OFF' }}</span>
             </button>
           </div>
         </div>
@@ -183,8 +249,8 @@
       <!-- Submit Action Bar -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
         <div class="text-xs text-muted-foreground flex items-center gap-1.5">
-          <kbd class="rounded border border-border px-1.5 py-0.5 text-[10px] font-mono bg-muted">⌘ Enter</kbd>
-          <span>to launch pipeline immediately</span>
+          <kbd class="rounded border border-border px-1.5 py-0.5 text-[10px] font-mono bg-muted">Ctrl + Enter</kbd>
+          <span>to search immediately</span>
         </div>
 
         <AppButton
@@ -194,8 +260,8 @@
           :disabled="loading"
           class="w-full sm:w-auto"
         >
-          <Play class="h-3.5 w-3.5 fill-current" />
-          <span>{{ loading ? 'Launching engine...' : 'Launch Pipeline' }}</span>
+          <Search class="h-3.5 w-3.5" />
+          <span>{{ loading ? 'Searching leads...' : 'Find Leads' }}</span>
         </AppButton>
       </div>
     </form>
@@ -204,7 +270,20 @@
 
 <script setup>
 import { reactive, ref } from "vue";
-import { Check, Cpu, Mail, Play, Search, SlidersHorizontal, Table2, Tag } from "lucide-vue-next";
+import {
+  Bot,
+  Check,
+  Cpu,
+  Globe,
+  Mail,
+  Play,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  Table2,
+  Tag,
+  Zap
+} from "lucide-vue-next";
 import AppButton from "@/components/ui/AppButton.vue";
 
 defineProps({
@@ -233,6 +312,7 @@ const categoryPresets = [
 const form = reactive({
   searchQuery: "",
   category: "",
+  engine: "ai",
   maxResults: 25,
   headless: true,
   collectEmailsFromWebsite: true,
@@ -240,16 +320,15 @@ const form = reactive({
 });
 
 const fieldOptions = [
-  { value: "name", label: "name" },
-  { value: "category", label: "category" },
-  { value: "phone", label: "phone" },
-  { value: "emails", label: "emails" },
-  { value: "website", label: "website" },
-  { value: "rating", label: "rating" },
-  { value: "reviewCount", label: "reviews" },
-  { value: "address", label: "address" },
-  { value: "hours", label: "hours" },
-  { value: "mapsUrl", label: "mapsUrl" }
+  { value: "name", label: "Business Name" },
+  { value: "category", label: "Category" },
+  { value: "phone", label: "Phone" },
+  { value: "emails", label: "Email" },
+  { value: "website", label: "Website" },
+  { value: "rating", label: "Rating & Reviews" },
+  { value: "address", label: "Address" },
+  { value: "hours", label: "Hours" },
+  { value: "mapsUrl", label: "Google Map Link" }
 ];
 
 function toggleField(val) {
@@ -266,7 +345,7 @@ function handleSubmit() {
   errorMessage.value = "";
 
   if (!form.searchQuery.trim()) {
-    errorMessage.value = "Please enter a target search query for Google Maps.";
+    errorMessage.value = "Please enter a target search query.";
     return;
   }
 
@@ -278,6 +357,7 @@ function handleSubmit() {
   emit("submit", {
     searchQuery: form.searchQuery.trim(),
     category: form.category.trim(),
+    engine: form.engine,
     maxResults: form.maxResults,
     headless: form.headless,
     collectEmailsFromWebsite: form.collectEmailsFromWebsite,

@@ -3,7 +3,7 @@ export const STATUS_STEPS = [
     step: 1,
     id: "Just Got",
     label: "Just Got",
-    detail: "Lead automatically captured from Google Maps into workspace archive.",
+    detail: "Newly captured lead, waiting for initial contact.",
     pillClass: "bg-slate-700 text-white border-slate-600 hover:bg-slate-600",
     activePillClass: "bg-slate-800 text-white font-bold ring-2 ring-slate-400 shadow-md",
     dotClass: "bg-slate-300",
@@ -80,3 +80,4 @@ export function getStatusStep(status) {
     STATUS_STEPS[0]
   );
 }
+

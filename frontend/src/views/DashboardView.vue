@@ -3,12 +3,12 @@
     <!-- Top Action Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <p class="text-xs font-mono uppercase tracking-wider text-muted-foreground">Command Center</p>
+        <p class="text-xs font-mono uppercase tracking-wider text-muted-foreground">Dashboard</p>
         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-0.5">
-          Google Maps Pipeline Overview
+          Lead Generation Overview
         </h2>
         <p class="text-xs sm:text-sm text-muted-foreground mt-1">
-          Monitor scraping crawler velocities, active jobs, and discovered business leads.
+          Track discovered businesses, verified contact details, and outreach activity.
         </p>
       </div>
 
@@ -16,7 +16,7 @@
         <RouterLink to="/app/pipeline">
           <AppButton variant="primary" size="sm">
             <Plus class="h-3.5 w-3.5" />
-            <span>Launch Pipeline</span>
+            <span>Find Leads</span>
           </AppButton>
         </RouterLink>
 
@@ -31,19 +31,19 @@
       <!-- Metric 1: Businesses Stored -->
       <div class="rounded-xl border border-border bg-card p-4 sm:p-5 transition-colors">
         <div class="flex items-center justify-between text-muted-foreground">
-          <span class="text-xs font-mono uppercase tracking-wider">Leads Stored</span>
+          <span class="text-xs font-mono uppercase tracking-wider">Total Leads</span>
           <Building2 class="h-4 w-4" />
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-foreground font-mono mt-3">
           {{ workspaceStore.businesses.length }}
         </div>
-        <p class="text-[11px] text-muted-foreground mt-1">Deduped businesses</p>
+        <p class="text-[11px] text-muted-foreground mt-1">Saved businesses</p>
       </div>
 
       <!-- Metric 2: Verified Phones -->
       <div class="rounded-xl border border-border bg-card p-4 sm:p-5 transition-colors">
         <div class="flex items-center justify-between text-muted-foreground">
-          <span class="text-xs font-mono uppercase tracking-wider">Phone Contacts</span>
+          <span class="text-xs font-mono uppercase tracking-wider">Phone Numbers</span>
           <Phone class="h-4 w-4" />
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-foreground font-mono mt-3">
@@ -55,26 +55,26 @@
       <!-- Metric 3: Active Jobs -->
       <div class="rounded-xl border border-border bg-card p-4 sm:p-5 transition-colors">
         <div class="flex items-center justify-between text-muted-foreground">
-          <span class="text-xs font-mono uppercase tracking-wider">Active Crawlers</span>
+          <span class="text-xs font-mono uppercase tracking-wider">Active Searches</span>
           <Activity class="h-4 w-4" />
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-foreground font-mono mt-3 flex items-center gap-2">
           <span>{{ workspaceStore.runningJobs.length }}</span>
           <span v-if="workspaceStore.runningJobs.length > 0" class="live-beacon"></span>
         </div>
-        <p class="text-[11px] text-muted-foreground mt-1">Crawlers running</p>
+        <p class="text-[11px] text-muted-foreground mt-1">Searches running</p>
       </div>
 
       <!-- Metric 4: Total Emails Discovered -->
       <div class="rounded-xl border border-border bg-card p-4 sm:p-5 transition-colors">
         <div class="flex items-center justify-between text-muted-foreground">
-          <span class="text-xs font-mono uppercase tracking-wider">Emails Discovered</span>
+          <span class="text-xs font-mono uppercase tracking-wider">Emails Found</span>
           <Mail class="h-4 w-4" />
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-foreground font-mono mt-3">
           {{ totalDiscoveredEmails }}
         </div>
-        <p class="text-[11px] text-muted-foreground mt-1">Crawled from websites</p>
+        <p class="text-[11px] text-muted-foreground mt-1">Found from websites</p>
       </div>
     </div>
 
@@ -83,9 +83,9 @@
       <!-- Recent Jobs Table -->
       <div class="rounded-xl border border-border bg-card p-4 sm:p-5">
         <div class="flex items-center justify-between pb-3 border-b border-border mb-3">
-          <h3 class="text-sm font-semibold text-foreground">Recent Scraping Runs</h3>
+          <h3 class="text-sm font-semibold text-foreground">Recent Searches</h3>
           <RouterLink to="/app/pipeline" class="text-xs text-muted-foreground hover:text-foreground">
-            View all runs →
+            View all searches →
           </RouterLink>
         </div>
 
@@ -118,7 +118,7 @@
               </tr>
               <tr v-if="!workspaceStore.jobs.length">
                 <td colspan="3" class="py-6 text-center text-muted-foreground text-xs">
-                  No scraping runs recorded yet.
+                  No searches recorded yet.
                 </td>
               </tr>
             </tbody>
@@ -129,9 +129,9 @@
       <!-- Quick Lead Snapshot -->
       <div class="rounded-xl border border-border bg-card p-4 sm:p-5">
         <div class="flex items-center justify-between pb-3 border-b border-border mb-3">
-          <h3 class="text-sm font-semibold text-foreground">Latest Discoveries</h3>
+          <h3 class="text-sm font-semibold text-foreground">Recent Leads</h3>
           <RouterLink to="/app/leads" class="text-xs text-muted-foreground hover:text-foreground">
-            Open archive →
+            View all leads →
           </RouterLink>
         </div>
 
@@ -153,7 +153,7 @@
           </div>
 
           <div v-if="!workspaceStore.businesses.length" class="py-6 text-center text-muted-foreground text-xs">
-            No leads discovered yet. Launch a pipeline to get started.
+            No leads yet. Start a search to find leads.
           </div>
         </div>
       </div>

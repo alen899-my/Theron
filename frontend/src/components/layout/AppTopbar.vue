@@ -13,7 +13,7 @@
 
         <!-- Breadcrumb / Page Title -->
         <div class="flex items-center gap-2 text-xs font-mono">
-          <span class="text-muted-foreground hidden sm:inline">ROUTER COMMAND</span>
+          <span class="text-muted-foreground hidden sm:inline">Theron</span>
           <span class="text-muted-foreground hidden sm:inline">/</span>
           <h1 class="font-bold text-foreground tracking-tight text-sm uppercase">{{ title }}</h1>
         </div>

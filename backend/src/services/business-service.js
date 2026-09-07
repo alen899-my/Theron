@@ -444,12 +444,30 @@ async function updateBusinessStatus(businessId, status) {
   return mapBusinessRow(result.rows[0]);
 }
 
+async function getBusinessById(businessId) {
+  if (!businessId || typeof businessId !== "string" || !UUID_REGEX.test(businessId)) {
+    return null;
+  }
+  const result = await pool.query(
+    `
+      SELECT *
+      FROM businesses
+      WHERE id = $1::uuid
+      LIMIT 1
+    `,
+    [businessId]
+  );
+  if (!result.rows[0]) return null;
+  return mapBusinessRow(result.rows[0]);
+}
+
 module.exports = {
   upsertBusiness,
   findExistingBusiness,
   saveBusinessIfNotExists,
   getAllExistingIdentifiers,
   listBusinessesForUser,
+  getBusinessById,
   deleteBusiness,
   bulkDeleteBusinesses,
   clearAllBusinessesForUser,

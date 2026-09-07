@@ -125,6 +125,19 @@ export const api = {
       token,
       body: { status }
     });
+  },
+  generateLeadPitch(token, businessId, payload = {}) {
+    return request(`/api/pipeline/maps/businesses/${businessId}/generate-pitch`, {
+      method: "POST",
+      token,
+      body: payload
+    });
+  },
+  aiEnrichLead(token, businessId) {
+    return request(`/api/pipeline/maps/businesses/${businessId}/ai-enrich`, {
+      method: "POST",
+      token
+    });
   }
 };
 

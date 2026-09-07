@@ -6,7 +6,7 @@
         <span class="h-2.5 w-2.5 rounded-full bg-zinc-700"></span>
         <span class="h-2.5 w-2.5 rounded-full bg-zinc-700"></span>
         <span class="h-2.5 w-2.5 rounded-full bg-zinc-700"></span>
-        <span class="text-zinc-400 text-[11px] ml-2">crawler.stdout</span>
+        <span class="text-zinc-400 text-[11px] ml-2">Activity Log</span>
       </div>
 
       <div class="flex items-center gap-3">
@@ -30,7 +30,7 @@
       class="p-4 space-y-1.5 max-h-[460px] overflow-y-auto font-mono text-[11px] select-text"
     >
       <div v-if="!logs.length" class="text-zinc-600 italic py-8 text-center">
-        Waiting for crawler log stream...
+        Waiting for search activity...
       </div>
 
       <div

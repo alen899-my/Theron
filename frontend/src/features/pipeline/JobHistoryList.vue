@@ -3,15 +3,15 @@
     <div class="flex items-center justify-between pb-3 border-b border-border mb-3">
       <div class="flex items-center gap-2">
         <History class="h-4 w-4 text-muted-foreground" />
-        <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Run History</h4>
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent Searches</h4>
       </div>
-      <span class="text-xs font-mono text-muted-foreground">{{ jobs.length }} runs</span>
+      <span class="text-xs font-mono text-muted-foreground">{{ jobs.length }} searches</span>
     </div>
 
     <!-- History items list -->
     <div class="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
       <div v-if="!jobs.length" class="py-6 text-center text-xs text-muted-foreground">
-        No past runs recorded.
+        No search history yet.
       </div>
 
       <button

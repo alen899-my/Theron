@@ -56,12 +56,12 @@ const navItems = [
     icon: LayoutDashboard
   },
   {
-    label: "Pipeline Studio",
+    label: "Find Leads",
     to: "/app/pipeline",
     icon: Rows3
   },
   {
-    label: "Lead Archive",
+    label: "All Leads",
     to: "/app/leads",
     icon: TableProperties
   }

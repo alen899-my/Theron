@@ -2,7 +2,10 @@ const { randomUUID } = require("crypto");
 const pool = require("../db/pool");
 const env = require("../config/env");
 const { buildSelectedPayload } = require("../utils/field-selection");
+const { uniqueStrings } = require("../utils/normalize");
 const { scrapeGoogleMapsSearch } = require("./google-maps-scraper");
+const { discoverLeadsWithAI } = require("./openrouter-service");
+const { collectEmailsFromWebsite } = require("./website-email-service");
 const {
   upsertBusiness,
   saveBusinessIfNotExists,
@@ -17,7 +20,8 @@ async function createScrapeJob({
   requestedFields,
   maxResults,
   headless,
-  collectEmailsFromWebsite
+  collectEmailsFromWebsite,
+  engine = "ai"
 }) {
   const result = await pool.query(
     `
@@ -43,7 +47,8 @@ async function createScrapeJob({
       maxResults,
       JSON.stringify({
         headless,
-        collectEmailsFromWebsite
+        collectEmailsFromWebsite,
+        engine: engine || "ai"
       })
     ]
   );
@@ -173,7 +178,8 @@ async function attachBusinessToJob({ jobId, businessId, position, selectedPayloa
 
 async function runScrapeJob(job) {
   await setJobRunning(job.id);
-  await addJobLog(job.id, `Job started for query: ${job.searchQuery}`);
+  const engine = (job.options?.engine || "ai").toLowerCase();
+  await addJobLog(job.id, `Job started using ${engine.toUpperCase()} engine for query: "${job.searchQuery}"`);
 
   let savedCount = 0;
   const controller = new AbortController();
@@ -183,62 +189,105 @@ async function runScrapeJob(job) {
     const existingIdentifiers = await getAllExistingIdentifiers();
     await addJobLog(job.id, `Loaded ${existingIdentifiers.size} existing business identifiers for deduplication.`);
 
-    const scrapeResult = await scrapeGoogleMapsSearch({
-      searchQuery: job.searchQuery,
-      maxResults: job.maxResults,
-      existingIdentifiers,
-      headless: job.options.headless ?? env.defaultHeadless,
-      collectEmailsFromWebsite: job.options.collectEmailsFromWebsite === true,
-      abortSignal: controller.signal,
-      onProgress: async (message) => {
-        await addJobLog(job.id, message);
-      },
-      onBusiness: async (scrapedBusiness, currentNumber, totalNumber) => {
-        try {
-          if (job.category) {
-            scrapedBusiness.category = job.category;
-          }
-          scrapedBusiness.status = "Just Got";
+    const handleBusinessProcessing = async (scrapedBusiness) => {
+      try {
+        if (job.category) {
+          scrapedBusiness.category = job.category;
+        }
+        scrapedBusiness.status = "Just Got";
 
-          const { isNew, business: storedBusiness } = await saveBusinessIfNotExists(scrapedBusiness);
+        const { isNew, business: storedBusiness } = await saveBusinessIfNotExists(scrapedBusiness);
 
-          if (!isNew) {
-            await addJobLog(
-              job.id,
-              `Skipped "${storedBusiness.name || "business"}" (already added in database).`
-            );
-            return { saved: false, reason: "already_exists", business: storedBusiness };
-          }
-
-          // Register in the live lookup set so subsequent threads won't process it either
-          if (storedBusiness.dedupeKey) existingIdentifiers.add(storedBusiness.dedupeKey.toLowerCase());
-          if (storedBusiness.placeId) existingIdentifiers.add(storedBusiness.placeId.toLowerCase());
-          if (storedBusiness.mapsUrl) existingIdentifiers.add(storedBusiness.mapsUrl.toLowerCase());
-
-          const selectedPayload = buildSelectedPayload(storedBusiness, job.requestedFields);
-
-          await attachBusinessToJob({
-            jobId: job.id,
-            businessId: storedBusiness.id,
-            position: savedCount + 1,
-            selectedPayload
-          });
-
-          savedCount += 1;
-          await incrementJobSavedCount(job.id, 1);
+        if (!isNew) {
           await addJobLog(
             job.id,
-            `Saved new lead: ${storedBusiness.name || "unknown business"} (${savedCount}/${job.maxResults})`
+            `Skipped "${storedBusiness.name || "business"}" (already added in database).`
           );
-
-          return { saved: true, business: storedBusiness };
-        } catch (saveError) {
-          console.error("[scrape-job] Error saving scraped business:", saveError);
-          await addJobLog(job.id, `Failed to save ${scrapedBusiness.name}: ${saveError.message}`, "error");
-          return { saved: false, error: saveError.message };
+          return { saved: false, reason: "already_exists", business: storedBusiness };
         }
+
+        // Register in the live lookup set so subsequent threads won't process it either
+        if (storedBusiness.dedupeKey) existingIdentifiers.add(storedBusiness.dedupeKey.toLowerCase());
+        if (storedBusiness.placeId) existingIdentifiers.add(storedBusiness.placeId.toLowerCase());
+        if (storedBusiness.mapsUrl) existingIdentifiers.add(storedBusiness.mapsUrl.toLowerCase());
+
+        const selectedPayload = buildSelectedPayload(storedBusiness, job.requestedFields);
+
+        await attachBusinessToJob({
+          jobId: job.id,
+          businessId: storedBusiness.id,
+          position: savedCount + 1,
+          selectedPayload
+        });
+
+        savedCount += 1;
+        await incrementJobSavedCount(job.id, 1);
+        await addJobLog(
+          job.id,
+          `Saved new lead: ${storedBusiness.name || "unknown business"} (${savedCount}/${job.maxResults})`
+        );
+
+        return { saved: true, business: storedBusiness };
+      } catch (saveError) {
+        console.error("[scrape-job] Error saving scraped business:", saveError);
+        await addJobLog(job.id, `Failed to save ${scrapedBusiness.name}: ${saveError.message}`, "error");
+        return { saved: false, error: saveError.message };
       }
-    });
+    };
+
+    let scrapeResult;
+
+    if (engine === "ai" || engine === "hybrid") {
+      scrapeResult = await discoverLeadsWithAI({
+        searchQuery: job.searchQuery,
+        category: job.category,
+        maxResults: job.maxResults,
+        existingIdentifiers,
+        abortSignal: controller.signal,
+        onProgress: async (message) => {
+          await addJobLog(job.id, message);
+        },
+        onBusiness: async (scrapedBusiness, currentNumber, totalNumber) => {
+          // If hybrid mode or website email collection is requested, crawl website for verified emails
+          if (
+            (engine === "hybrid" || job.options?.collectEmailsFromWebsite === true) &&
+            scrapedBusiness.website &&
+            (!scrapedBusiness.emails || scrapedBusiness.emails.length === 0)
+          ) {
+            try {
+              await addJobLog(job.id, `[Hybrid] Crawling ${scrapedBusiness.website} for verified emails...`);
+              const webEmails = await collectEmailsFromWebsite(scrapedBusiness.website);
+              if (webEmails && webEmails.length > 0) {
+                scrapedBusiness.emails = uniqueStrings([...(scrapedBusiness.emails || []), ...webEmails]);
+                await addJobLog(
+                  job.id,
+                  `[Hybrid] Discovered ${webEmails.length} email(s) from website: ${webEmails.join(", ")}`
+                );
+              }
+            } catch (crawlErr) {
+              // Non-blocking website crawl
+            }
+          }
+          return await handleBusinessProcessing(scrapedBusiness);
+        }
+      });
+    } else {
+      // Browser scraper (Playwright)
+      scrapeResult = await scrapeGoogleMapsSearch({
+        searchQuery: job.searchQuery,
+        maxResults: job.maxResults,
+        existingIdentifiers,
+        headless: job.options?.headless ?? env.defaultHeadless,
+        collectEmailsFromWebsite: job.options?.collectEmailsFromWebsite === true,
+        abortSignal: controller.signal,
+        onProgress: async (message) => {
+          await addJobLog(job.id, message);
+        },
+        onBusiness: async (scrapedBusiness, currentNumber, totalNumber) => {
+          return await handleBusinessProcessing(scrapedBusiness);
+        }
+      });
+    }
 
     await setJobDiscoveryCount(job.id, scrapeResult.discoveredCount);
 

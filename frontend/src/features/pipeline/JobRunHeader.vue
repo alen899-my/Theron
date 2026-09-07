@@ -5,45 +5,52 @@
         <AppBadge :variant="statusBadgeVariant" :pulse="job?.status === 'running'">
           {{ job?.status || 'idle' }}
         </AppBadge>
-        <span v-if="job?.category" class="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[11px] font-mono bg-muted text-foreground">
-          🏷️ {{ job.category }}
+        <span
+          v-if="job?.options?.engine"
+          class="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-xs font-medium bg-muted text-foreground"
+        >
+          <template v-if="job.options.engine === 'ai'">🤖 AI Search</template>
+          <template v-else-if="job.options.engine === 'hybrid'">⚡ AI + Web Emails</template>
+          <template v-else>🌐 Google Maps</template>
         </span>
-        <span class="text-xs text-muted-foreground font-mono">ID: {{ job?.id?.slice(0, 8) || 'none' }}</span>
+        <span v-if="job?.category" class="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-xs font-mono bg-muted text-foreground">
+          {{ job.category }}
+        </span>
         <span v-if="job?.createdAt" class="text-xs text-muted-foreground">
           • {{ formatTime(job.createdAt) }}
         </span>
       </div>
 
       <h3 class="text-base sm:text-lg font-bold text-foreground truncate max-w-xl">
-        {{ job?.searchQuery || (job ? 'Google Maps Scraping Run' : 'No active run selected') }}
+        {{ job?.searchQuery || (job ? 'Lead Search Run' : 'No active search selected') }}
       </h3>
     </div>
 
     <!-- Metrics, Stop Button & View Switcher -->
     <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-      <!-- Metric: Discovered -->
-      <div class="border border-border rounded-lg px-3 py-1.5 bg-background/50 font-mono text-xs">
-        <div class="text-[10px] text-muted-foreground uppercase tracking-wider">Discovered</div>
-        <div class="font-bold text-foreground text-sm">{{ job?.totalDiscovered || 0 }}</div>
+      <!-- Metric: Found -->
+      <div class="border border-border rounded-lg px-3.5 py-1.5 bg-background/50 text-xs">
+        <div class="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">Found</div>
+        <div class="font-bold text-foreground text-sm font-mono">{{ job?.totalDiscovered || 0 }}</div>
       </div>
 
       <!-- Metric: Saved -->
-      <div class="border border-border rounded-lg px-3 py-1.5 bg-background/50 font-mono text-xs">
-        <div class="text-[10px] text-muted-foreground uppercase tracking-wider">Saved</div>
-        <div class="font-bold text-foreground text-sm">{{ job?.totalSaved || 0 }}</div>
+      <div class="border border-border rounded-lg px-3.5 py-1.5 bg-background/50 text-xs">
+        <div class="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">Saved</div>
+        <div class="font-bold text-foreground text-sm font-mono">{{ job?.totalSaved || 0 }}</div>
       </div>
 
-      <!-- STOP PARSING BUTTON (Active when running or queued) -->
+      <!-- STOP BUTTON (Active when running or queued) -->
       <AppButton
         v-if="job?.status === 'running' || job?.status === 'queued'"
         variant="destructive"
         size="sm"
         :disabled="isStopping"
-        title="Stop scraping immediately"
+        title="Stop search immediately"
         @click="$emit('stopJob')"
       >
         <Square class="h-3.5 w-3.5 fill-current" />
-        <span>{{ isStopping ? 'Stopping...' : 'Stop Parsing' }}</span>
+        <span>{{ isStopping ? 'Stopping...' : 'Stop Search' }}</span>
       </AppButton>
 
       <!-- View Switcher (Table vs Logs) -->

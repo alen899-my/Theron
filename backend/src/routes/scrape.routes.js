@@ -11,11 +11,16 @@ const {
 } = require("../services/scrape-job-service");
 const {
   listBusinessesForUser,
+  getBusinessById,
   deleteBusiness,
   bulkDeleteBusinesses,
   clearAllBusinessesForUser,
   updateBusinessStatus
 } = require("../services/business-service");
+const {
+  generateOutreachPitch,
+  enrichLeadWithAI
+} = require("../services/openrouter-service");
 const env = require("../config/env");
 
 const router = express.Router();
@@ -36,6 +41,10 @@ router.post("/jobs", async (req, res, next) => {
       typeof body.collectEmailsFromWebsite === "boolean"
         ? body.collectEmailsFromWebsite
         : requestedFields.includes("emails");
+    const engine =
+      typeof body.engine === "string" && ["ai", "browser", "hybrid"].includes(body.engine.toLowerCase())
+        ? body.engine.toLowerCase()
+        : "ai";
 
     if (!searchQuery) {
       return res.status(400).json({ error: "searchQuery is required" });
@@ -53,7 +62,8 @@ router.post("/jobs", async (req, res, next) => {
       requestedFields,
       maxResults,
       headless,
-      collectEmailsFromWebsite
+      collectEmailsFromWebsite,
+      engine
     });
 
     setImmediate(() => {
@@ -173,6 +183,40 @@ router.patch("/businesses/:id/status", async (req, res, next) => {
       return res.status(404).json({ error: "Business not found." });
     }
     return res.json({ ok: true, business });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/businesses/:id/generate-pitch", async (req, res, next) => {
+  try {
+    const business = await getBusinessById(req.params.id);
+    if (!business) {
+      return res.status(404).json({ error: "Business not found." });
+    }
+
+    const { pitchGoal, tone } = req.body || {};
+    const pitch = await generateOutreachPitch({
+      business,
+      pitchGoal: typeof pitchGoal === "string" ? pitchGoal.trim() : undefined,
+      tone: typeof tone === "string" ? tone.trim() : undefined
+    });
+
+    return res.json({ ok: true, pitch });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/businesses/:id/ai-enrich", async (req, res, next) => {
+  try {
+    const business = await getBusinessById(req.params.id);
+    if (!business) {
+      return res.status(404).json({ error: "Business not found." });
+    }
+
+    const enrichment = await enrichLeadWithAI({ business });
+    return res.json({ ok: true, enrichment });
   } catch (error) {
     return next(error);
   }

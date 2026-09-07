@@ -2,12 +2,12 @@
   <div class="w-full max-w-sm sm:max-w-md">
     <div class="rounded-xl border border-border bg-card p-6 sm:p-8 shadow-sm">
       <div class="mb-6">
-        <p class="text-xs font-mono uppercase tracking-wider text-muted-foreground">Operator Access</p>
+        <p class="text-xs font-mono uppercase tracking-wider text-muted-foreground">Account Login</p>
         <h2 class="text-2xl font-bold tracking-tight text-foreground mt-1">
           Sign In
         </h2>
         <p class="text-xs text-muted-foreground mt-1.5">
-          Enter your admin credentials to access the scraping pipeline workspace.
+          Enter your credentials to access your lead generation dashboard.
         </p>
       </div>
 
@@ -18,7 +18,7 @@
             v-model="form.email"
             type="email"
             required
-            placeholder="operator@company.com"
+            placeholder="you@company.com"
             class="h-9 w-full rounded-md border border-border bg-background px-3 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-foreground/50 transition-colors"
           />
         </div>
@@ -52,7 +52,7 @@
           to="/signup"
           class="font-semibold text-foreground hover:underline"
         >
-          Create operator profile →
+          Create an account →
         </RouterLink>
       </div>
     </div>

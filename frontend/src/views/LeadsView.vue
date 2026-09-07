@@ -3,12 +3,12 @@
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <p class="text-xs font-mono uppercase tracking-wider text-muted-foreground">Lead Archive</p>
+        <p class="text-xs font-mono uppercase tracking-wider text-muted-foreground">Leads Database</p>
         <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-0.5">
-          Google Maps Leads
+          All Saved Leads
         </h2>
         <p class="text-xs sm:text-sm text-muted-foreground mt-1">
-          Explore, filter, slice, inspect, and export all deduplicated business records archived across your pipeline runs.
+          Search, filter, inspect, and export all business leads saved from your searches.
         </p>
       </div>
 
@@ -40,7 +40,7 @@
         </div>
         <div class="text-2xl font-bold font-mono text-foreground mt-1.5">{{ stats.withEmail }}</div>
         <div class="text-[11px] text-emerald-500 dark:text-emerald-400 font-mono mt-0.5">
-          {{ stats.emailPct }}% enriched
+          {{ stats.emailPct }}% with email
         </div>
       </div>
 
@@ -51,7 +51,7 @@
           <Phone class="h-3.5 w-3.5" />
         </div>
         <div class="text-2xl font-bold font-mono text-foreground mt-1.5">{{ stats.withPhone }}</div>
-        <div class="text-[11px] text-muted-foreground font-mono mt-0.5">{{ stats.phonePct }}% listed</div>
+        <div class="text-[11px] text-muted-foreground font-mono mt-0.5">{{ stats.phonePct }}% with phone</div>
       </div>
 
       <!-- KPI 4: Websites -->
@@ -61,7 +61,7 @@
           <Globe class="h-3.5 w-3.5" />
         </div>
         <div class="text-2xl font-bold font-mono text-foreground mt-1.5">{{ stats.withWebsite }}</div>
-        <div class="text-[11px] text-muted-foreground font-mono mt-0.5">{{ stats.websitePct }}% web-ready</div>
+        <div class="text-[11px] text-muted-foreground font-mono mt-0.5">{{ stats.websitePct }}% with website</div>
       </div>
 
       <!-- KPI 5: Avg Rating -->
@@ -74,13 +74,13 @@
           <span v-if="stats.avgRating !== '—'">⭐ {{ stats.avgRating }}</span>
           <span v-else>—</span>
         </div>
-        <div class="text-[11px] text-muted-foreground font-mono mt-0.5">Google Maps score</div>
+        <div class="text-[11px] text-muted-foreground font-mono mt-0.5">Average rating</div>
       </div>
     </div>
 
     <!-- Filtered Leads Table View -->
     <LiveDataTable
-      title="All Stored Businesses"
+      title="All Saved Leads"
       :rows="mapsRows"
     />
   </div>
