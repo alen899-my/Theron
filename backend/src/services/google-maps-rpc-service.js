@@ -108,7 +108,7 @@ function extractLeadsFromRpcResponse(parsed, defaultCategory) {
       ? `https://www.google.com/maps/place/?q=place_id:${placeId}`
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + " " + address)}`;
 
-    leads.push({
+    const lead = {
       name,
       category,
       address,
@@ -122,7 +122,9 @@ function extractLeadsFromRpcResponse(parsed, defaultCategory) {
       mapsUrl,
       emails: [],
       hours: []
-    });
+    };
+    lead.dedupeKey = buildDedupeKey(lead);
+    leads.push(lead);
   }
 
   return leads;

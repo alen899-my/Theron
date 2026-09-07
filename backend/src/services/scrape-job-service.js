@@ -2,7 +2,7 @@ const { randomUUID } = require("crypto");
 const pool = require("../db/pool");
 const env = require("../config/env");
 const { buildSelectedPayload } = require("../utils/field-selection");
-const { uniqueStrings } = require("../utils/normalize");
+const { uniqueStrings, buildDedupeKey } = require("../utils/normalize");
 const { scrapeGoogleMapsSearch } = require("./google-maps-scraper");
 const { discoverLeadsWithAI } = require("./openrouter-service");
 const { discoverMapsLeadsViaRpc } = require("./google-maps-rpc-service");
@@ -196,6 +196,9 @@ async function runScrapeJob(job) {
           scrapedBusiness.category = job.category;
         }
         scrapedBusiness.status = "Just Got";
+        if (!scrapedBusiness.dedupeKey) {
+          scrapedBusiness.dedupeKey = buildDedupeKey(scrapedBusiness);
+        }
 
         const { isNew, business: storedBusiness } = await saveBusinessIfNotExists(scrapedBusiness);
 

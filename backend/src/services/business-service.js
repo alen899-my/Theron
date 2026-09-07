@@ -1,6 +1,6 @@
 const { randomUUID } = require("crypto");
 const pool = require("../db/pool");
-const { uniqueStrings } = require("../utils/normalize");
+const { uniqueStrings, buildDedupeKey } = require("../utils/normalize");
 
 function mapBusinessRow(row) {
   return {
@@ -27,6 +27,10 @@ function mapBusinessRow(row) {
 }
 
 async function upsertBusiness(business) {
+  if (!business.dedupeKey) {
+    business.dedupeKey = buildDedupeKey(business) || business.placeId || randomUUID();
+  }
+
   const existingResult = await pool.query(
     `
       SELECT *
@@ -245,6 +249,10 @@ async function findExistingBusiness(business) {
 }
 
 async function saveBusinessIfNotExists(business) {
+  if (!business.dedupeKey) {
+    business.dedupeKey = buildDedupeKey(business) || business.placeId || randomUUID();
+  }
+
   const existing = await findExistingBusiness(business);
   if (existing) {
     return { isNew: false, business: existing };
