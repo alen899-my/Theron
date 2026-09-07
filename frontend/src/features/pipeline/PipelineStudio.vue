@@ -3,6 +3,7 @@
     <!-- Top Notion-Style Configuration Form -->
     <NotionForm
       :loading="isSubmitting"
+      :submit-error="submitError"
       @submit="handleMapsSubmit"
     />
 
@@ -63,6 +64,7 @@ const activeView = ref("table"); // 'table' | 'logs'
 const isSubmitting = ref(false);
 const isRefreshing = ref(false);
 const isStopping = ref(false);
+const submitError = ref("");
 
 let pollTimer = null;
 
@@ -95,11 +97,14 @@ const currentLogs = computed(() => {
 
 async function handleMapsSubmit(payload) {
   isSubmitting.value = true;
+  submitError.value = "";
   try {
     const job = await workspaceStore.createJob(authStore.token, payload);
     workspaceStore.setSelectedJob(job.id);
     await syncCurrentJob();
     startPolling();
+  } catch (err) {
+    submitError.value = err?.message || "Failed to start search. Please try again.";
   } finally {
     isSubmitting.value = false;
   }

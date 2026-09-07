@@ -254,12 +254,24 @@
         </div>
       </div>
 
-      <!-- Error Message -->
+      <!-- Form Validation Error -->
       <div
         v-if="errorMessage"
         class="rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-500 font-mono"
       >
         {{ errorMessage }}
+      </div>
+
+      <!-- Server / API Error -->
+      <div
+        v-if="submitError"
+        class="rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-3 text-xs text-red-400 flex items-start gap-2.5"
+      >
+        <span class="mt-0.5 shrink-0 text-red-500">✕</span>
+        <div>
+          <div class="font-semibold text-red-400 mb-0.5">Search failed</div>
+          <div class="font-mono text-red-400/80">{{ submitError }}</div>
+        </div>
       </div>
 
       <!-- Submit Action Bar -->
@@ -306,6 +318,10 @@ defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  submitError: {
+    type: String,
+    default: ""
   }
 });
 
