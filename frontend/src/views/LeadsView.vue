@@ -12,7 +12,8 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2.5">
+        <ViewSwitcher v-model="currentView" />
         <AppButton variant="outline" size="sm" @click="refreshData" title="Refresh leads">
           <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': isRefreshing }" />
           <span>Refresh</span>
@@ -78,10 +79,17 @@
       </div>
     </div>
 
-    <!-- Filtered Leads Table View -->
+    <!-- Filtered Leads Table View vs Kanban Board View -->
     <LiveDataTable
+      v-if="currentView === 'table'"
       title="All Saved Leads"
       :rows="mapsRows"
+      @status-updated="refreshData"
+    />
+    <KanbanBoard
+      v-else
+      :leads="mapsRows"
+      @lead-updated="refreshData"
     />
   </div>
 </template>
@@ -91,12 +99,16 @@ import { computed, onMounted, ref } from "vue";
 import { Database, Globe, Mail, Phone, RefreshCw, Star } from "lucide-vue-next";
 import AppButton from "@/components/ui/AppButton.vue";
 import LiveDataTable from "@/features/pipeline/LiveDataTable.vue";
+import ViewSwitcher from "@/features/kanban/ViewSwitcher.vue";
+import KanbanBoard from "@/features/kanban/KanbanBoard.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useWorkspaceStore } from "@/stores/workspace";
 
 const authStore = useAuthStore();
 const workspaceStore = useWorkspaceStore();
 
+const savedView = typeof window !== "undefined" ? localStorage.getItem("theron_leads_view") : null;
+const currentView = ref(savedView === "kanban" ? "kanban" : "table");
 const isRefreshing = ref(false);
 
 const mapsRows = computed(() => {
