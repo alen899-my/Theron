@@ -169,6 +169,18 @@ function normalizeAiBusinessItem(item, categoryHint = "") {
   const mapsQuery = encodeURIComponent(`${name} ${address || ""}`.trim());
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
+  let rawImages = [];
+  if (Array.isArray(item.images)) {
+    rawImages = item.images;
+  } else if (Array.isArray(item.photos)) {
+    rawImages = item.photos;
+  } else if (typeof item.image === "string" && item.image) {
+    rawImages = [item.image];
+  } else if (typeof item.imageUrl === "string" && item.imageUrl) {
+    rawImages = [item.imageUrl];
+  }
+  const images = uniqueStrings(rawImages.filter((img) => typeof img === "string" && img.startsWith("http"))).slice(0, 4);
+
   const partialBusiness = {
     name,
     category,
@@ -180,6 +192,7 @@ function normalizeAiBusinessItem(item, categoryHint = "") {
     status: "Just Got",
     hours,
     emails,
+    images,
     mapsUrl,
     latitude: null,
     longitude: null,

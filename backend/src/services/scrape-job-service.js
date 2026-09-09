@@ -6,7 +6,7 @@ const { uniqueStrings, buildDedupeKey } = require("../utils/normalize");
 const { scrapeGoogleMapsSearch } = require("./google-maps-scraper");
 const { discoverLeadsWithAI } = require("./openrouter-service");
 const { discoverMapsLeadsViaRpc } = require("./google-maps-rpc-service");
-const { collectEmailsFromWebsite } = require("./website-email-service");
+const { collectEmailsFromWebsite, collectWebsiteDetails } = require("./website-email-service");
 const {
   upsertBusiness,
   saveBusinessIfNotExists,
@@ -258,20 +258,33 @@ async function runScrapeJob(job) {
         }
         const scrapedBusiness = rpcLeads[i];
 
-        // If website email crawling is requested
-        if (
-          job.options?.collectEmailsFromWebsite === true &&
+        // If business has a website, crawl it for emails (if requested) or photos (if none discovered)
+        const shouldCrawlWebsite =
           scrapedBusiness.website &&
-          (!scrapedBusiness.emails || scrapedBusiness.emails.length === 0)
-        ) {
+          (job.options?.collectEmailsFromWebsite === true ||
+           !scrapedBusiness.images ||
+           scrapedBusiness.images.length === 0);
+
+        if (shouldCrawlWebsite) {
           try {
-            await addJobLog(job.id, `[Fast Maps] Checking ${scrapedBusiness.website} for emails...`);
-            const webEmails = await collectEmailsFromWebsite(scrapedBusiness.website);
-            if (webEmails && webEmails.length > 0) {
-              scrapedBusiness.emails = uniqueStrings([...(scrapedBusiness.emails || []), ...webEmails]);
+            await addJobLog(job.id, `[Fast Maps] Extracting website media & contact info from ${scrapedBusiness.website}...`);
+            const webDetails = await collectWebsiteDetails(scrapedBusiness.website);
+            if (
+              job.options?.collectEmailsFromWebsite === true &&
+              webDetails.emails &&
+              webDetails.emails.length > 0
+            ) {
+              scrapedBusiness.emails = uniqueStrings([...(scrapedBusiness.emails || []), ...webDetails.emails]);
               await addJobLog(
                 job.id,
-                `[Fast Maps] Discovered ${webEmails.length} email(s) from website: ${webEmails.join(", ")}`
+                `[Fast Maps] Discovered ${webDetails.emails.length} email(s) from website: ${webDetails.emails.join(", ")}`
+              );
+            }
+            if (webDetails.images && webDetails.images.length > 0) {
+              scrapedBusiness.images = uniqueStrings([...(scrapedBusiness.images || []), ...webDetails.images]).slice(0, 4);
+              await addJobLog(
+                job.id,
+                `[Fast Maps] Extracted ${webDetails.images.length} photo(s) from website for ${scrapedBusiness.name}`
               );
             }
           } catch (crawlErr) {
@@ -294,21 +307,31 @@ async function runScrapeJob(job) {
           await addJobLog(job.id, message);
         },
         onBusiness: async (scrapedBusiness, currentNumber, totalNumber) => {
-          // If hybrid mode or website email collection is requested, crawl website for verified emails
-          if (
-            (engine === "hybrid" || job.options?.collectEmailsFromWebsite === true) &&
+          // If hybrid mode or website collection is requested, crawl website for verified media & emails
+          const shouldCrawlAiWebsite =
             scrapedBusiness.website &&
-            (!scrapedBusiness.emails || scrapedBusiness.emails.length === 0)
-          ) {
+            (engine === "hybrid" ||
+             job.options?.collectEmailsFromWebsite === true ||
+             !scrapedBusiness.images ||
+             scrapedBusiness.images.length < 2);
+
+          if (shouldCrawlAiWebsite) {
             try {
-              await addJobLog(job.id, `[Hybrid] Crawling ${scrapedBusiness.website} for verified emails...`);
-              const webEmails = await collectEmailsFromWebsite(scrapedBusiness.website);
-              if (webEmails && webEmails.length > 0) {
-                scrapedBusiness.emails = uniqueStrings([...(scrapedBusiness.emails || []), ...webEmails]);
+              await addJobLog(job.id, `[Hybrid] Crawling ${scrapedBusiness.website} for media & verified emails...`);
+              const webDetails = await collectWebsiteDetails(scrapedBusiness.website);
+              if (
+                (engine === "hybrid" || job.options?.collectEmailsFromWebsite === true) &&
+                webDetails.emails &&
+                webDetails.emails.length > 0
+              ) {
+                scrapedBusiness.emails = uniqueStrings([...(scrapedBusiness.emails || []), ...webDetails.emails]);
                 await addJobLog(
                   job.id,
-                  `[Hybrid] Discovered ${webEmails.length} email(s) from website: ${webEmails.join(", ")}`
+                  `[Hybrid] Discovered ${webDetails.emails.length} email(s) from website: ${webDetails.emails.join(", ")}`
                 );
+              }
+              if (webDetails.images && webDetails.images.length > 0) {
+                scrapedBusiness.images = uniqueStrings([...(scrapedBusiness.images || []), ...webDetails.images]).slice(0, 4);
               }
             } catch (crawlErr) {
               // Non-blocking website crawl

@@ -5,7 +5,12 @@ const FIELD_ALIASES = {
   mapUrl: "mapsUrl",
   maps_url: "mapsUrl",
   review_count: "reviewCount",
-  reviews: "reviewCount"
+  reviews: "reviewCount",
+  photo: "images",
+  photos: "images",
+  image: "images",
+  imageUrls: "images",
+  image_urls: "images"
 };
 
 const DEFAULT_FIELDS = [
@@ -17,7 +22,8 @@ const DEFAULT_FIELDS = [
   "rating",
   "reviewCount",
   "status",
-  "mapsUrl"
+  "mapsUrl",
+  "images"
 ];
 
 const ALLOWED_FIELDS = new Set([
@@ -32,7 +38,8 @@ const ALLOWED_FIELDS = new Set([
   "hours",
   "mapsUrl",
   "coordinates",
-  "emails"
+  "emails",
+  "images"
 ]);
 
 function normalizeRequestedFields(requestedFields) {
@@ -81,6 +88,11 @@ function buildSelectedPayload(business, requestedFields) {
 
     if (field === "mapsUrl") {
       payload.mapsUrl = business.mapsUrl || null;
+      continue;
+    }
+
+    if (field === "images") {
+      payload.images = Array.isArray(business.images) ? business.images : [];
       continue;
     }
 

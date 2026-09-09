@@ -17,6 +17,7 @@ function mapBusinessRow(row) {
     status: row.status,
     hours: Array.isArray(row.hours) ? row.hours : [],
     emails: Array.isArray(row.emails) ? row.emails : [],
+    images: Array.isArray(row.images) ? row.images : [],
     mapsUrl: row.maps_url,
     latitude: row.latitude,
     longitude: row.longitude,
@@ -55,6 +56,7 @@ async function upsertBusiness(business) {
       status: business.status || existing.status,
       hours: uniqueStrings([...(existing.hours || []), ...(business.hours || [])]),
       emails: uniqueStrings([...(existing.emails || []), ...(business.emails || [])]),
+      images: uniqueStrings([...(existing.images || []), ...(business.images || [])]),
       mapsUrl: business.mapsUrl || existing.maps_url,
       latitude: business.latitude ?? existing.latitude,
       longitude: business.longitude ?? existing.longitude,
@@ -79,10 +81,11 @@ async function upsertBusiness(business) {
           status = $10,
           hours = $11::jsonb,
           emails = $12::jsonb,
-          maps_url = $13,
-          latitude = $14,
-          longitude = $15,
-          raw_payload = $16::jsonb,
+          images = $13::jsonb,
+          maps_url = $14,
+          latitude = $15,
+          longitude = $16,
+          raw_payload = $17::jsonb,
           updated_at = now()
         WHERE id = $1
         RETURNING *
@@ -100,6 +103,7 @@ async function upsertBusiness(business) {
         mergedBusiness.status,
         JSON.stringify(mergedBusiness.hours),
         JSON.stringify(mergedBusiness.emails),
+        JSON.stringify(mergedBusiness.images),
         mergedBusiness.mapsUrl,
         mergedBusiness.latitude,
         mergedBusiness.longitude,
@@ -126,6 +130,7 @@ async function upsertBusiness(business) {
         status,
         hours,
         emails,
+        images,
         maps_url,
         latitude,
         longitude,
@@ -133,7 +138,7 @@ async function upsertBusiness(business) {
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12::jsonb, $13::jsonb, $14, $15, $16, $17::jsonb
+        $11, $12::jsonb, $13::jsonb, $14::jsonb, $15, $16, $17, $18::jsonb
       )
       RETURNING *
     `,
@@ -151,6 +156,7 @@ async function upsertBusiness(business) {
       business.status || "Just Got",
       JSON.stringify(uniqueStrings(business.hours || [])),
       JSON.stringify(uniqueStrings(business.emails || [])),
+      JSON.stringify(uniqueStrings(business.images || [])),
       business.mapsUrl,
       business.latitude,
       business.longitude,
@@ -274,6 +280,7 @@ async function saveBusinessIfNotExists(business) {
         status,
         hours,
         emails,
+        images,
         maps_url,
         latitude,
         longitude,
@@ -281,7 +288,7 @@ async function saveBusinessIfNotExists(business) {
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12::jsonb, $13::jsonb, $14, $15, $16, $17::jsonb
+        $11, $12::jsonb, $13::jsonb, $14::jsonb, $15, $16, $17, $18::jsonb
       )
       RETURNING *
     `,
@@ -299,6 +306,7 @@ async function saveBusinessIfNotExists(business) {
       business.status || "Just Got",
       JSON.stringify(uniqueStrings(business.hours || [])),
       JSON.stringify(uniqueStrings(business.emails || [])),
+      JSON.stringify(uniqueStrings(business.images || [])),
       business.mapsUrl,
       business.latitude,
       business.longitude,

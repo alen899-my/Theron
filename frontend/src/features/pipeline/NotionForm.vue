@@ -348,7 +348,7 @@ const form = reactive({
   maxResults: 25,
   headless: true,
   collectEmailsFromWebsite: true,
-  requestedFields: ["name", "category", "phone", "emails", "website", "rating", "reviewCount", "address"]
+  requestedFields: ["name", "category", "phone", "emails", "website", "rating", "reviewCount", "address", "images"]
 });
 
 const fieldOptions = [
@@ -360,7 +360,8 @@ const fieldOptions = [
   { value: "rating", label: "Rating & Reviews" },
   { value: "address", label: "Address" },
   { value: "hours", label: "Hours" },
-  { value: "mapsUrl", label: "Google Map Link" }
+  { value: "mapsUrl", label: "Google Map Link" },
+  { value: "images", label: "Images / Photos" }
 ];
 
 function toggleField(val) {

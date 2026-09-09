@@ -86,6 +86,7 @@ const currentResults = computed(() => {
     address: r.business?.address || r.selectedPayload?.address || "",
     hours: r.business?.hours || r.selectedPayload?.hours || [],
     mapsUrl: r.business?.mapsUrl || r.selectedPayload?.mapsUrl || "",
+    images: r.business?.images || r.selectedPayload?.images || [],
     status: r.business?.status || r.selectedPayload?.status || "Just Got",
     id: r.business?.id || r.business_id || i
   }));

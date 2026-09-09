@@ -418,6 +418,7 @@
             </th>
             <th class="py-2.5 px-3 font-mono font-medium text-muted-foreground w-12 text-center">#</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[200px]">Business Name</th>
+            <th class="py-2.5 px-3 font-medium text-muted-foreground w-20 text-center">Photos</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Category</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Status</th>
             <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Phone</th>
@@ -456,6 +457,28 @@
             </td>
             <td class="py-3 px-3">
               <div class="font-medium text-foreground group-hover:text-foreground/90">{{ item.name }}</div>
+            </td>
+            <!-- Photos Column (Max 2 thumbnails) -->
+            <td class="py-3 px-3 text-center" @click.stop>
+              <div v-if="item.images && item.images.length" class="flex items-center justify-center gap-1">
+                <a
+                  v-for="(img, idx) in (item.images || []).slice(0, 2)"
+                  :key="idx"
+                  :href="img"
+                  target="_blank"
+                  rel="noreferrer"
+                  class="group/thumb block h-8 w-8 rounded-md overflow-hidden border border-border/80 bg-muted hover:border-foreground/60 transition-all shrink-0 relative shadow-2xs"
+                  :title="`Open photo ${idx + 1}`"
+                >
+                  <img
+                    :src="img"
+                    :alt="item.name"
+                    class="h-full w-full object-cover transition-transform group-hover/thumb:scale-110"
+                    loading="lazy"
+                  />
+                </a>
+              </div>
+              <span v-else class="text-muted-foreground/40 font-mono text-[11px]">—</span>
             </td>
             <td class="py-3 px-3">
               <span class="inline-block rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[11px] text-muted-foreground font-mono">
@@ -809,6 +832,7 @@ const quickPresets = computed(() => {
   const allCount = props.rows.length;
   const withEmailCount = props.rows.filter((r) => r.emails && r.emails.length > 0).length;
   const withPhoneCount = props.rows.filter((r) => r.phone && r.phone.trim()).length;
+  const withImagesCount = props.rows.filter((r) => r.images && r.images.length > 0).length;
   const highRatedCount = props.rows.filter((r) => r.rating !== null && Number(r.rating) >= 4.0).length;
   const missingWebsiteCount = props.rows.filter((r) => !r.website || !r.website.trim()).length;
 
@@ -816,6 +840,7 @@ const quickPresets = computed(() => {
     { id: "all", label: "All Leads", count: allCount },
     { id: "with_email", label: "With Email", count: withEmailCount },
     { id: "with_phone", label: "With Phone", count: withPhoneCount },
+    { id: "with_images", label: "With Photos", count: withImagesCount },
     { id: "high_rating", label: "Rated 4.0+ ⭐", count: highRatedCount },
     { id: "needs_website", label: "Missing Website", count: missingWebsiteCount }
   ];
@@ -970,6 +995,8 @@ const filteredAndSortedRows = computed(() => {
     result = result.filter((r) => r.emails && r.emails.length > 0);
   } else if (filters.quickPreset === "with_phone") {
     result = result.filter((r) => r.phone && r.phone.trim());
+  } else if (filters.quickPreset === "with_images") {
+    result = result.filter((r) => r.images && r.images.length > 0);
   } else if (filters.quickPreset === "high_rating") {
     result = result.filter((r) => r.rating !== null && Number(r.rating) >= 4.0);
   } else if (filters.quickPreset === "needs_website") {

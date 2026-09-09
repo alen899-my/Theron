@@ -139,6 +139,62 @@
               <!-- TAB 1: CONTACT & INFO -->
               <!-- ======================================================== -->
               <div v-if="activeTab === 'details'" class="space-y-4">
+                <!-- Media / Photos Showcase (Max 2 images) -->
+                <div v-if="displayImages.length > 0" class="space-y-1.5">
+                  <div class="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                    <span class="flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
+                      <ImageIcon class="h-3 w-3 text-foreground" />
+                      <span>Photos</span>
+                    </span>
+                    <span class="text-[11px]">{{ displayImages.length }} shown (2 max)</span>
+                  </div>
+
+                  <div v-if="displayImages.length === 1" class="relative w-full h-44 sm:h-52 overflow-hidden rounded-xl border border-border bg-muted/20 group">
+                    <img
+                      :src="displayImages[0]"
+                      :alt="lead.name"
+                      class="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+                      loading="lazy"
+                      @error="handleImgError(displayImages[0])"
+                    />
+                    <a
+                      :href="displayImages[0]"
+                      target="_blank"
+                      rel="noreferrer"
+                      class="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono bg-background/80 hover:bg-background text-foreground backdrop-blur-md border border-border/80 shadow-xs transition-colors"
+                      title="Open full-size image"
+                    >
+                      <ExternalLink class="h-3 w-3" />
+                      <span>View Full</span>
+                    </a>
+                  </div>
+
+                  <div v-else class="grid grid-cols-2 gap-2 w-full h-36 sm:h-44">
+                    <div
+                      v-for="(img, idx) in displayImages"
+                      :key="idx"
+                      class="relative h-full overflow-hidden rounded-xl border border-border bg-muted/20 group"
+                    >
+                      <img
+                        :src="img"
+                        :alt="`${lead.name} photo ${idx + 1}`"
+                        class="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        @error="handleImgError(img)"
+                      />
+                      <a
+                        :href="img"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="absolute bottom-2 right-2 p-1.5 rounded-md bg-background/80 hover:bg-background text-foreground backdrop-blur-md border border-border/80 shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Open full-size image"
+                      >
+                        <ExternalLink class="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Contact Channels List -->
                 <div class="rounded-lg border border-border divide-y divide-border bg-background overflow-hidden text-xs">
                   <!-- Phone Row -->
@@ -545,6 +601,7 @@ import {
   Copy,
   ExternalLink,
   Globe,
+  Image as ImageIcon,
   Loader2,
   Mail,
   MapPin,
@@ -584,6 +641,19 @@ const isUpdating = ref(false);
 const copied = ref(false);
 const copiedField = ref("");
 const statusError = ref("");
+
+const failedImages = ref(new Set());
+
+const displayImages = computed(() => {
+  const list = Array.isArray(props.lead?.images) ? props.lead.images : [];
+  return list
+    .filter((img) => typeof img === "string" && img.startsWith("http") && !failedImages.value.has(img))
+    .slice(0, 2);
+});
+
+function handleImgError(url) {
+  if (url) failedImages.value.add(url);
+}
 
 // AI Outreach State
 const selectedGoal = ref("Intro Call");

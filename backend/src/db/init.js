@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS businesses (
   status text,
   hours jsonb NOT NULL DEFAULT '[]'::jsonb,
   emails jsonb NOT NULL DEFAULT '[]'::jsonb,
+  images jsonb NOT NULL DEFAULT '[]'::jsonb,
   maps_url text,
   latitude double precision,
   longitude double precision,
@@ -91,6 +92,10 @@ async function initializeDatabase() {
 
   await pool.query(`
     ALTER TABLE scrape_jobs ADD COLUMN IF NOT EXISTS category text;
+  `);
+
+  await pool.query(`
+    ALTER TABLE businesses ADD COLUMN IF NOT EXISTS images jsonb NOT NULL DEFAULT '[]'::jsonb;
   `);
 
   await pool.query(`

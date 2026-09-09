@@ -17,7 +17,7 @@ function shouldVisitLink(href) {
 
 async function fetchHtml(url) {
   const controller = new AbortController();
-  const fetchTimeout = Math.min(Number(env.emailFetchTimeoutMs) || 8000, 2500);
+  const fetchTimeout = Math.max(Number(env.emailFetchTimeoutMs) || 5000, 4000);
   const timeout = setTimeout(() => controller.abort(), fetchTimeout);
 
   try {
@@ -26,7 +26,11 @@ async function fetchHtml(url) {
       signal: controller.signal,
       headers: {
         "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        "accept":
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "no-cache"
       }
     });
 
@@ -55,19 +59,92 @@ function buildSameOriginUrl(baseUrl, href) {
   }
 }
 
-async function collectEmailsFromWebsite(website) {
+function extractImagesFromHtml(html, baseUrl) {
+  if (!html || typeof html !== "string") return [];
+  const images = [];
+
+  function addCandidate(rawSrc) {
+    if (!rawSrc || typeof rawSrc !== "string") return;
+    const clean = rawSrc.trim();
+    if (
+      clean.startsWith("data:") ||
+      clean.endsWith(".svg") ||
+      clean.includes("pixel") ||
+      clean.includes("tracking") ||
+      clean.includes("1x1")
+    ) {
+      return;
+    }
+    const resolved = buildSameOriginUrl(baseUrl, clean);
+    if (resolved && resolved.startsWith("http") && !images.includes(resolved)) {
+      images.push(resolved);
+    }
+  }
+
+  try {
+    const $ = cheerio.load(html);
+
+    // 1. Open Graph & Twitter meta images (highest quality business images)
+    addCandidate($('meta[property="og:image"]').attr("content"));
+    addCandidate($('meta[property="og:image:secure_url"]').attr("content"));
+    addCandidate($('meta[name="twitter:image"]').attr("content"));
+    addCandidate($('meta[name="twitter:image:src"]').attr("content"));
+
+    // 2. High-res icons / touch icons
+    addCandidate($('link[rel="apple-touch-icon"]').attr("href"));
+    addCandidate($('link[rel="icon"][sizes*="192"]').attr("href"));
+    addCandidate($('link[rel="icon"][sizes*="180"]').attr("href"));
+
+    // 3. Logo and hero images from header / nav
+    $('header img, nav img, img[class*="logo" i], img[id*="logo" i], img[alt*="logo" i]').each((_, el) => {
+      const src =
+        $(el).attr("src") ||
+        $(el).attr("data-src") ||
+        $(el).attr("data-lazy-src") ||
+        $(el).attr("data-orig-file");
+      addCandidate(src);
+    });
+
+    // 4. Content / gallery / storefront images with photo extensions (.jpg, .jpeg, .png, .webp)
+    $("img").each((_, el) => {
+      if (images.length >= 6) return;
+      const src =
+        $(el).attr("src") ||
+        $(el).attr("data-src") ||
+        $(el).attr("data-lazy-src") ||
+        $(el).attr("data-orig-file");
+      if (
+        src &&
+        (/\.(jpe?g|png|webp)/i.test(src) ||
+          src.includes("uploads") ||
+          src.includes("images") ||
+          src.includes("cdn") ||
+          src.includes("format="))
+      ) {
+        addCandidate(src);
+      }
+    });
+  } catch (err) {
+    // Ignore html parse errors
+  }
+
+  return uniqueStrings(images).slice(0, 4);
+}
+
+async function collectWebsiteDetails(website) {
   const normalizedUrl = normalizeWebsiteUrl(website);
 
   if (!normalizedUrl) {
-    return [];
+    return { emails: [], images: [] };
   }
 
   const visited = new Set();
   const queue = [normalizedUrl];
   const emails = [];
+  const images = [];
 
   while (queue.length > 0 && visited.size < 2) {
-    if (emails.length > 0) {
+    if (emails.length > 0 && images.length > 0) {
       break;
     }
     const nextUrl = queue.shift();
@@ -84,6 +161,9 @@ async function collectEmailsFromWebsite(website) {
     }
 
     emails.push(...extractEmailsFromHtml(html));
+    if (images.length < 2) {
+      images.push(...extractImagesFromHtml(html, nextUrl));
+    }
 
     if (visited.size === 1) {
       const $ = cheerio.load(html);
@@ -123,9 +203,19 @@ async function collectEmailsFromWebsite(website) {
     }
   }
 
-  return uniqueStrings(emails.map(normalizeEmail)).slice(0, 10);
+  return {
+    emails: uniqueStrings(emails.map(normalizeEmail)).slice(0, 10),
+    images: uniqueStrings(images).slice(0, 4)
+  };
+}
+
+async function collectEmailsFromWebsite(website) {
+  const details = await collectWebsiteDetails(website);
+  return details.emails;
 }
 
 module.exports = {
-  collectEmailsFromWebsite
+  collectEmailsFromWebsite,
+  collectWebsiteDetails,
+  extractImagesFromHtml
 };

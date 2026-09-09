@@ -124,6 +124,7 @@ const mapsRows = computed(() => {
     address: b.address || "",
     hours: b.hours || [],
     mapsUrl: b.mapsUrl || "",
+    images: Array.isArray(b.images) ? b.images : [],
     status: b.status || "Just Got",
     id: b.id
   }));

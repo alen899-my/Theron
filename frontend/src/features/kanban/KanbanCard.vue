@@ -46,6 +46,34 @@
       </div>
     </div>
 
+    <!-- Image Previews (Max 2 images) -->
+    <div v-if="displayImages.length > 0" class="overflow-hidden rounded-lg">
+      <div v-if="displayImages.length === 1" class="relative w-full h-28 overflow-hidden rounded-lg border border-border/60 bg-muted/20">
+        <img
+          :src="displayImages[0]"
+          :alt="lead.name"
+          loading="lazy"
+          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          @error="handleImgError(displayImages[0])"
+        />
+      </div>
+      <div v-else class="grid grid-cols-2 gap-1.5 w-full h-24 overflow-hidden rounded-lg">
+        <div
+          v-for="(img, idx) in displayImages"
+          :key="idx"
+          class="relative h-full overflow-hidden rounded-md border border-border/60 bg-muted/20"
+        >
+          <img
+            :src="img"
+            :alt="`${lead.name} photo ${idx + 1}`"
+            loading="lazy"
+            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            @error="handleImgError(img)"
+          />
+        </div>
+      </div>
+    </div>
+
     <!-- Location Preview -->
     <div v-if="lead.address" class="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
       <MapPin class="h-3 w-3 shrink-0 text-muted-foreground/70" />
@@ -151,6 +179,19 @@ const copiedField = ref(null);
 const hasEmail = computed(() => {
   return Array.isArray(props.lead?.emails) && props.lead.emails.length > 0 && Boolean(props.lead.emails[0]);
 });
+
+const failedImages = ref(new Set());
+
+const displayImages = computed(() => {
+  const list = Array.isArray(props.lead?.images) ? props.lead.images : [];
+  return list
+    .filter((img) => typeof img === "string" && img.startsWith("http") && !failedImages.value.has(img))
+    .slice(0, 2);
+});
+
+function handleImgError(url) {
+  if (url) failedImages.value.add(url);
+}
 
 function onDragStart(event) {
   isDragging.value = true;

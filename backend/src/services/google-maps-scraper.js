@@ -9,7 +9,7 @@ const {
   extractPlaceIdFromMapsUrl,
   buildDedupeKey
 } = require("../utils/normalize");
-const { collectEmailsFromWebsite } = require("./website-email-service");
+const { collectEmailsFromWebsite, collectWebsiteDetails } = require("./website-email-service");
 
 async function emitProgress(onProgress, message) {
   if (!onProgress) {
@@ -221,6 +221,39 @@ async function extractPlaceDetails(context, place, options) {
     const { latitude, longitude } = extractCoordinatesFromMapsUrl(mapsUrl);
     const placeId = extractPlaceIdFromMapsUrl(mapsUrl || place.href);
 
+    // Extract available images from Google Maps detail page
+    const rawImages = await detailPage.evaluate(() => {
+      const urls = [];
+      const imgs = document.querySelectorAll(
+        'button[jsaction*="heroHeaderImage"] img, button[aria-label*="Photo"] img, div[role="region"] img, img[src*="googleusercontent.com"], img[src*="ggpht.com"]'
+      );
+      for (const img of imgs) {
+        const src = img.currentSrc || img.src || img.getAttribute("src");
+        if (
+          src &&
+          (src.includes("googleusercontent.com") || src.includes("ggpht.com")) &&
+          !src.includes("gstatic.com")
+        ) {
+          urls.push(src);
+        }
+      }
+      return urls;
+    }).catch(() => []);
+
+    const placeImages = [];
+    for (const raw of rawImages) {
+      let normalized = raw;
+      if (/\/s\d+-[^/]+\//.test(normalized)) {
+        normalized = normalized.replace(/\/s\d+-[^/]+\//, "/s600/");
+      } else if (normalized.includes("=w$w-h$h")) {
+        normalized = normalized.replace("=w$w-h$h", "=w600-h400-k-no");
+      }
+      if (!placeImages.includes(normalized)) {
+        placeImages.push(normalized);
+      }
+      if (placeImages.length >= 4) break;
+    }
+
     const business = {
       placeId,
       name,
@@ -239,13 +272,21 @@ async function extractPlaceDetails(context, place, options) {
       status,
       hours: uniqueStrings(hours),
       emails: [],
+      images: placeImages,
       mapsUrl,
       latitude,
       longitude
     };
 
-    if (options.collectEmailsFromWebsite && business.website) {
-      business.emails = await collectEmailsFromWebsite(business.website);
+    const needsWebsiteImages = business.website && business.images.length === 0;
+    if ((options.collectEmailsFromWebsite && business.website) || needsWebsiteImages) {
+      const webDetails = await collectWebsiteDetails(business.website);
+      if (options.collectEmailsFromWebsite) {
+        business.emails = webDetails.emails || [];
+      }
+      if (webDetails.images && webDetails.images.length) {
+        business.images = uniqueStrings([...business.images, ...webDetails.images]).slice(0, 4);
+      }
     }
 
     business.rawPayload = {
