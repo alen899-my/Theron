@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const { randomUUID } = require("crypto");
 const pool = require("../db/pool");
 const { signAccessToken } = require("../middleware/auth");
@@ -40,7 +40,7 @@ async function createUser({ fullName, email, password }) {
     throw error;
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 10);
   const id = randomUUID();
 
   const result = await pool.query(
