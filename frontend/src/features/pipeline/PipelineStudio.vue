@@ -1,11 +1,17 @@
 <template>
   <div class="space-y-6 pb-12">
-    <!-- Top Notion-Style Configuration Form -->
-    <NotionForm
-      :loading="isSubmitting"
-      :submit-error="submitError"
-      @submit="handleMapsSubmit"
-    />
+    <!-- Action Bar -->
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h1 class="text-lg font-bold text-foreground tracking-tight">Lead Pipeline</h1>
+        <p class="text-xs text-muted-foreground mt-0.5">Search, extract and manage business leads.</p>
+      </div>
+      <NotionForm
+        :loading="isSubmitting"
+        :submit-error="submitError"
+        @submit="handleMapsSubmit"
+      />
+    </div>
 
     <!-- Active Job Run Header & Live Table/Logs -->
     <div class="space-y-4">
@@ -28,6 +34,7 @@
             title="Discovered Leads"
             :rows="currentResults"
             :is-running="currentActiveJob?.status === 'running'"
+            card-columns="single"
           />
 
           <TerminalLogs

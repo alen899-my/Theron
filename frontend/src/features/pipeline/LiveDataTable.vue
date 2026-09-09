@@ -399,214 +399,38 @@
       </div>
     </div>
 
-    <!-- Responsive Table Container -->
-    <div class="overflow-x-auto min-h-[300px] max-h-[600px]">
-      <table class="w-full text-left text-xs border-collapse">
-        <!-- Table Header -->
-        <thead class="sticky top-0 z-10 border-b border-border bg-muted/90 backdrop-blur-md">
-          <tr>
-            <!-- 1st Column: Select Checkbox -->
-            <th class="py-2.5 px-3 w-10 text-center">
-              <input
-                type="checkbox"
-                :checked="isAllSelected"
-                :indeterminate="isIndeterminate"
-                class="h-4 w-4 rounded border-border text-foreground accent-foreground cursor-pointer"
-                title="Select / Deselect all visible rows"
-                @change="toggleSelectAll"
-              />
-            </th>
-            <th class="py-2.5 px-3 font-mono font-medium text-muted-foreground w-12 text-center">#</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[200px]">Business Name</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground w-20 text-center">Photos</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Category</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Status</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[130px]">Phone</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[180px]">Email</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[160px]">Website</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[110px]">Rating</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground min-w-[220px]">Address</th>
-            <th class="py-2.5 px-3 font-medium text-muted-foreground w-16 text-center">Map</th>
-            <!-- End Column: Actions Buttons (Eye + Trash) -->
-            <th class="py-2.5 px-3 font-medium text-muted-foreground w-20 text-center">Actions</th>
-          </tr>
-        </thead>
-
-        <!-- Table Body -->
-        <tbody v-if="filteredAndSortedRows.length" class="divide-y divide-border/60">
-          <tr
-            v-for="(item, index) in filteredAndSortedRows"
-            :key="item.id || item.dedupeKey || index"
-            :class="[
-              'group hover:bg-muted/40 cursor-pointer transition-colors',
-              selectedIds.has(item.id) ? 'bg-muted/60' : ''
-            ]"
-            @click="openLeadModal(item, 'details')"
-          >
-            <!-- 1st Column: Row Checkbox -->
-            <td class="py-3 px-3 text-center" @click.stop>
-              <input
-                type="checkbox"
-                :checked="selectedIds.has(item.id)"
-                class="h-4 w-4 rounded border-border text-foreground accent-foreground cursor-pointer"
-                @change="toggleSelect(item.id)"
-              />
-            </td>
-            <td class="py-3 px-3 font-mono text-muted-foreground text-center">
-              {{ item.position || index + 1 }}
-            </td>
-            <td class="py-3 px-3">
-              <div class="font-medium text-foreground group-hover:text-foreground/90">{{ item.name }}</div>
-            </td>
-            <!-- Photos Column (Max 2 thumbnails) -->
-            <td class="py-3 px-3 text-center" @click.stop>
-              <div v-if="item.images && item.images.length" class="flex items-center justify-center gap-1">
-                <a
-                  v-for="(img, idx) in (item.images || []).slice(0, 2)"
-                  :key="idx"
-                  :href="img"
-                  target="_blank"
-                  rel="noreferrer"
-                  class="group/thumb block h-8 w-8 rounded-md overflow-hidden border border-border/80 bg-muted hover:border-foreground/60 transition-all shrink-0 relative shadow-2xs"
-                  :title="`Open photo ${idx + 1}`"
-                >
-                  <img
-                    :src="img"
-                    :alt="item.name"
-                    class="h-full w-full object-cover transition-transform group-hover/thumb:scale-110"
-                    loading="lazy"
-                  />
-                </a>
-              </div>
-              <span v-else class="text-muted-foreground/40 font-mono text-[11px]">—</span>
-            </td>
-            <td class="py-3 px-3">
-              <span class="inline-block rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[11px] text-muted-foreground font-mono">
-                {{ item.category || '—' }}
-              </span>
-            </td>
-            <!-- Workflow Status Pill Column -->
-            <td class="py-3 px-3" @click.stop="openLeadModal(item, 'timeline')">
-              <button
-                type="button"
-                class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-mono font-semibold border transition-all hover:opacity-90 hover:scale-105 cursor-pointer shadow-xs whitespace-nowrap"
-                :class="getStatusPillClass(item.status)"
-                title="Click to view & change workflow status"
-              >
-                <span>{{ getStatusStep(item.status).label }}</span>
-              </button>
-            </td>
-            <td class="py-3 px-3">
-              <a
-                v-if="item.phone"
-                :href="`tel:${item.phone}`"
-                class="font-mono text-foreground hover:underline"
-                @click.stop
-              >
-                {{ item.phone }}
-              </a>
-              <span v-else class="text-muted-foreground/60">—</span>
-            </td>
-            <td class="py-3 px-3">
-              <div v-if="item.emails && item.emails.length" class="flex flex-wrap gap-1">
-                <span
-                  v-for="email in item.emails"
-                  :key="email"
-                  class="inline-flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-mono text-emerald-500 dark:text-emerald-400"
-                  title="Click to copy"
-                  @click.stop="copyText(email)"
-                >
-                  <Mail class="h-2.5 w-2.5" />
-                  {{ email }}
-                </span>
-              </div>
-              <span v-else class="text-muted-foreground/50 text-[11px]">None found</span>
-            </td>
-            <td class="py-3 px-3">
-              <a
-                v-if="item.website"
-                :href="item.website"
-                target="_blank"
-                rel="noreferrer"
-                class="inline-flex items-center gap-1 text-foreground/80 hover:text-foreground hover:underline"
-                @click.stop
-              >
-                <Globe class="h-3 w-3 text-muted-foreground" />
-                <span class="truncate max-w-[140px]">{{ cleanUrl(item.website) }}</span>
-                <ExternalLink class="h-2.5 w-2.5 text-muted-foreground" />
-              </a>
-              <span v-else class="text-muted-foreground/50">—</span>
-            </td>
-            <td class="py-3 px-3 font-mono">
-              <span v-if="item.rating" class="font-semibold text-foreground">
-                ⭐ {{ item.rating }}
-                <span v-if="item.reviewCount" class="text-muted-foreground font-normal text-[10px]">
-                  ({{ item.reviewCount }})
-                </span>
-              </span>
-              <span v-else class="text-muted-foreground/50">—</span>
-            </td>
-            <td class="py-3 px-3 text-muted-foreground truncate max-w-[240px]" :title="item.address">
-              {{ item.address || '—' }}
-            </td>
-            <td class="py-3 px-3 text-center" @click.stop>
-              <a
-                v-if="item.mapsUrl"
-                :href="item.mapsUrl"
-                target="_blank"
-                rel="noreferrer"
-                class="inline-flex p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-                title="Open on Google Maps"
-              >
-                <MapPin class="h-3.5 w-3.5" />
-              </a>
-              <span v-else class="text-muted-foreground/40">—</span>
-            </td>
-            <!-- End Column: Actions Buttons (Eye + Delete) -->
-            <td class="py-3 px-3 text-center" @click.stop>
-              <div class="flex items-center justify-center gap-1">
-                <button
-                  type="button"
-                  class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                  title="Inspect client details"
-                  @click.stop="openLeadModal(item, 'details')"
-                >
-                  <Eye class="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  class="p-1.5 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-40"
-                  title="Delete this lead"
-                  :disabled="deleteModal.loading"
-                  @click.stop="confirmDeleteRow(item)"
-                >
-                  <Trash2 class="h-4 w-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Card Grid -->
+    <div :class="['cards-area', cardColumns === 'single' && 'cards-area--single']">
+      <template v-if="filteredAndSortedRows.length">
+        <LeadCard
+          v-for="(item, index) in filteredAndSortedRows"
+          :key="item.id || item.dedupeKey || index"
+          :lead="item"
+          :delete-disabled="deleteModal.loading"
+          @view="(lead, tab) => openLeadModal(lead, tab || 'details')"
+          @delete="confirmDeleteRow"
+        />
+      </template>
 
       <!-- Empty State -->
-      <div v-if="!filteredAndSortedRows.length" class="flex flex-col items-center justify-center py-16 px-4 text-center">
-        <div class="rounded-full border border-border bg-muted/40 p-3 mb-3">
+      <div v-else class="empty-state">
+        <div class="empty-icon-wrap">
           <Inbox class="h-6 w-6 text-muted-foreground" />
         </div>
-        <h4 class="text-sm font-semibold text-foreground">
-          {{ isRunning ? 'Collecting leads in real-time...' : (activeFiltersCount > 0 ? 'No matching leads found' : 'No leads to display yet') }}
+        <h4 class="empty-title">
+          {{ isRunning ? 'Collecting leads in real-time...' : (activeFiltersCount > 0 ? 'No matching leads found' : 'No leads yet') }}
         </h4>
-        <p class="text-xs text-muted-foreground mt-1 max-w-sm">
+        <p class="empty-desc">
           {{
             isRunning
-              ? 'The crawler is currently scrolling Google Maps and visiting company websites. Discovered leads will pop into this table automatically.'
-              : (activeFiltersCount > 0 ? 'Try clearing or relaxing some of your search and filter criteria.' : 'Launch a Google Maps scrape job using the form above or pick an earlier run from history.')
+              ? 'Discovered leads will appear here automatically as they are found.'
+              : (activeFiltersCount > 0 ? 'Try clearing or relaxing some filters.' : 'Launch a search using the Find Leads button above.')
           }}
         </p>
         <button
           v-if="activeFiltersCount > 0 && !isRunning"
           type="button"
-          class="mt-3 text-xs font-mono text-foreground underline hover:text-foreground/80"
+          class="empty-reset"
           @click="resetFilters"
         >
           Reset all filters
@@ -663,6 +487,7 @@ import {
   X
 } from "lucide-vue-next";
 import AppButton from "@/components/ui/AppButton.vue";
+import LeadCard from "./LeadCard.vue";
 import LeadDetailModal from "./LeadDetailModal.vue";
 import DeleteConfirmModal from "./DeleteConfirmModal.vue";
 import { getStatusStep, STATUS_STEPS } from "./status-constants";
@@ -684,6 +509,10 @@ const props = defineProps({
   isRunning: {
     type: Boolean,
     default: false
+  },
+  cardColumns: {
+    type: String,
+    default: "grid" // 'grid' | 'single'
   }
 });
 
@@ -1284,3 +1113,78 @@ async function executeConfirmedDelete() {
   }
 }
 </script>
+
+<style scoped>
+.cards-area {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  min-height: 300px;
+}
+/* 2 columns from 640px */
+@media (min-width: 640px) {
+  .cards-area {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1rem;
+    gap: 0.625rem;
+  }
+}
+/* 3 columns from 1024px */
+@media (min-width: 1024px) {
+  .cards-area {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+/* 4 columns from 1536px */
+@media (min-width: 1536px) {
+  .cards-area {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+/* Single-column override (pipeline page) */
+.cards-area--single,
+.cards-area--single:is([class]) {
+  grid-template-columns: 1fr !important;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 1rem;
+  gap: 0.5rem;
+}
+.empty-icon-wrap {
+  display: flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem;
+  border-radius: 99px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.5);
+  margin-bottom: 0.25rem;
+}
+.empty-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.empty-desc {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 28rem;
+  line-height: 1.5;
+}
+.empty-reset {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.empty-reset:hover { opacity: 0.7; }
+</style>
